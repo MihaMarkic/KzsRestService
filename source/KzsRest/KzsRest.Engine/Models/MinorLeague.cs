@@ -22,13 +22,15 @@
         public int ULevel { get; }
         public Gender Gender { get; }
         public string Name { get; }
-        public MinorLeagueDivision(int cid, string url, int uLevel, Gender gender, string name)
+        public DivisionType DivisionType { get; }
+        public MinorLeagueDivision(int cid, string url, int uLevel, Gender gender, string name, DivisionType divisionType)
         {
             Cid = cid;
             Url = url;
             ULevel = uLevel;
             Gender = gender;
             Name = name;
+            DivisionType = divisionType;
         }
     }
 }

@@ -2,7 +2,6 @@
 using KzsRest.Engine.Models;
 using KzsRest.Engine.Services.Abstract;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -10,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace KzsRest.Engine.Services.Implementation
 {
-    public class KzsParser
+    public class KzsParser : IKzsParser
     {
         readonly IDomCache domCache;
         public KzsParser(IDomCache domCache)
@@ -22,7 +21,7 @@ namespace KzsRest.Engine.Services.Implementation
             var dom = await domCache.GetDomForAsync(address, TimeSpan.FromMinutes(15), ct);
             var html = new HtmlDocument();
             html.LoadHtml(dom);
-            
+
             var standingsContainer = html.DocumentNode.SelectSingleNode("//div[@id='33-301-standings-container']");
             if (standingsContainer != null)
             {
@@ -56,7 +55,7 @@ namespace KzsRest.Engine.Services.Implementation
                 return null;
             }
             var rows = table.SelectNodes("tbody/tr");
-            return new Standings(node.InnerText, rows.Select(r =>ExtractStandingsEntry(r)).ToArray());
+            return new Standings(node.InnerText, rows.Select(r => ExtractStandingsEntry(r)).ToArray());
         }
         internal static StandingsEntry ExtractStandingsEntry(HtmlNode tr)
         {
@@ -194,15 +193,15 @@ namespace KzsRest.Engine.Services.Implementation
                     minorLeagues: new MinorLeague[]
                     {
                         new MinorLeague(100, 17, Gender.Male, new MinorLeagueDivision[]{
-                            new MinorLeagueDivision(177, 
-                                "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U17/Fantje-U17---1.-SKL/cid/177", 17, Gender.Male, 
-                                "Fantje U17 - 1. SKL"),
+                            new MinorLeagueDivision(177,
+                                "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U17/Fantje-U17---1.-SKL/cid/177", 17, Gender.Male,
+                                "Fantje U17 - 1. SKL", DivisionType.First),
                             new MinorLeagueDivision(115,
                                 "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U17/Fantje-U17---2.-SKL/cid/115", 17, Gender.Male,
-                                "Fantje U17 - 2. SKL"),
+                                "Fantje U17 - 2. SKL", DivisionType.Second),
                             new MinorLeagueDivision(116,
                                 "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U17/Fantje-U17---kval.-za-1.-SKL/cid/116", 17, Gender.Male,
-                                "Fantje U17 - Kval. za 1. SKL"),
+                                "Fantje U17 - Kval. za 1. SKL", DivisionType.FirstQualify),
                         })
                     }
                 ));

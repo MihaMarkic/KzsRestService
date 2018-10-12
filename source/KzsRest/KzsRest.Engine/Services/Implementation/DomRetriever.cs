@@ -1,7 +1,9 @@
 ﻿using Flurl;
 using KzsRest.Engine.Services.Abstract;
+using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,7 +25,7 @@ namespace KzsRest.Engine.Services.Implementation
                 };
                 var exeRoot = Path.GetDirectoryName(typeof(DomRetriever).Assembly.Location);
                 string address = Url.Combine(Root, "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U17/cid/100");
-                psi.Arguments = $"--debug=true --cookies-file={Path.Combine(exeRoot, "cookies.dat")} --disk-cache=true --disk-cache-path={Path.Combine(exeRoot, "cache")} --load-images=false ./test.js {relativeAddress}";
+                psi.Arguments = $"--debug=false --cookies-file={Path.Combine(exeRoot, "cookies.dat")} --disk-cache=true --disk-cache-path={Path.Combine(exeRoot, "cache")} --load-images=false ./test.js {address}";
                 var process = new Process()
                 {
                     StartInfo = psi,
@@ -34,7 +36,16 @@ namespace KzsRest.Engine.Services.Implementation
                 process.Start();
                 process.BeginOutputReadLine();
                 process.WaitForExit();
-                return result;
+                var bytes = Convert.FromBase64String(result);
+                try
+                {
+                    string decoded = UTF8Encoding.UTF8.GetString(bytes);
+                    return decoded;
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Failed base64 decoding page content", ex);
+                }
             });
         }
     }
