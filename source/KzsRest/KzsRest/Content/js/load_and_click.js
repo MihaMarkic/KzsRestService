@@ -16,7 +16,8 @@ page.onLoadFinished = function() {
 	{
 		console.log("#" + system.args[1+currentOperation] + "#")
 	}
-	console.log(Base64Encode(page.content));
+	console.log(Base64Encode(page.content), "#");
+    //console.log("Page dump");
 	if (currentOperation < system.args.length-2)
 	{
 		currentOperation++;
@@ -24,7 +25,8 @@ page.onLoadFinished = function() {
 		//console.log("**** Clicking");
 		var id = system.args[1+currentOperation];
 		//console.log("Clicking id ", id);
-		page.evaluate(function(id) {
+        page.evaluate(function (id) {
+            
 			var el = document.getElementById(id);
 			if (el === null)
 			{
@@ -50,6 +52,9 @@ page.onLoadFinished = function() {
 	}
 };
 
+//page.onConsoleMessage = function (msg) {
+//    system.stderr.writeLine('console: ' + msg);
+//};
 // page.onLoadFinished = function(status) {
 //     console.log('Load Finishedx: ' + status);
 // };

@@ -1,36 +1,115 @@
 ﻿using HtmlAgilityPack;
 using KzsRest.Engine.Models;
 using KzsRest.Engine.Services.Abstract;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace KzsRest.Engine.Services.Implementation
 {
     public class KzsParser : IKzsParser
     {
+        const string Root = "Root";
         readonly IDomRetriever domRetriever;
-        public KzsParser(IDomRetriever domRetriever)
+        readonly ILogger<KzsParser> logger;
+        public KzsParser(IDomRetriever domRetriever, ILogger<KzsParser> logger)
         {
             this.domRetriever = domRetriever;
+            this.logger = logger;
         }
         public async Task<Team> GetTeamAsync(int teamId, int seasonId, CancellationToken ct)
         {
+            const string fixturesAndStandingTab = "33-200-tab-2";
+            const string playersTab = "33-200-tab-3";
             // http://www.kzs.si/incl?id=967&team_id=195883&league_id=undefined&season_id=102583
             string address = $"incl?id=967&team_id={teamId}&league_id=undefined&season_id={seasonId}";
-            var dom = await domRetriever.GetDomForAsync(address, ct);
-            var html = new HtmlDocument();
-            html.LoadHtml(dom[0].Content);
-            var players = await GetPlayersAsync(address, ct);
-            return new Team(players);
+            var dom = await domRetriever.GetDomForAsync(address, ct, fixturesAndStandingTab, playersTab);
+            var rootPage = dom.Cast<DomResultItem?>().SingleOrDefault(d => string.Equals(d.Value.Id, Root, StringComparison.Ordinal));
+            var fixturesAndResultsPage = dom.Cast<DomResultItem?>().SingleOrDefault(d => string.Equals(d.Value.Id, fixturesAndStandingTab, StringComparison.Ordinal));
+            var playersPage = dom.Cast<DomResultItem?>().SingleOrDefault(d => string.Equals(d.Value.Id, playersTab, StringComparison.Ordinal));
+            if (!rootPage.HasValue)
+            {
+                logger.LogWarning("Couldn't get root tab");
+                return null;
+            }
+            var teamTask = GetTeamDataAsync(rootPage.Value, ct);
+            Task<Player[]> playersTask;
+            if (playersPage.HasValue)
+            {
+                playersTask = GetPlayersAsync(playersPage.Value, ct);
+            }
+            else
+            {
+                logger.LogWarning("No players page found");
+                playersTask = null;
+            }
+            var team = await teamTask;
+            if (playersTask != null)
+            {
+                var players = await playersTask;
+                team = team.Clone(players: players);
+            }
+            return team;
         }
-        internal async Task<Player[]> GetPlayersAsync(string address, CancellationToken ct)
+        internal static Task<Team> GetTeamDataAsync(DomResultItem domItem, CancellationToken ct)
         {
-            //var dom = await domCache.GetDomForAsync(address, TimeSpan.FromMinutes(15), ct, "'33-200-tab-3'");
-            //var html = new HtmlDocument();
-            //html.LoadHtml(dom);
+            const string infoValueSelector = "span[@class='mbt-v2-team-full-widget-main-info-value']";
+            return Task.Run(() =>
+            {
+                var html = new HtmlDocument();
+                html.LoadHtml(domItem.Content);
+                var root = html.DocumentNode.SelectSingleNode("//div[@id='33-200-qualizer-1']");
+                var frame = html.DocumentNode.SelectSingleNode("(//div[@class='mbt-v2-col mbt-v2-col-6'])[2]");
+
+                string name = null;
+                string shortName = null;
+                string city = null;
+                string coach = null;
+                Arena arena = null;
+
+                foreach (var node in frame.SelectNodes("div[@class='mbt-v2-team-full-widget-main-info']"))
+                {
+                    var header = node.SelectSingleNode("span[@class='mbt-v2-team-full-widget-main-info-attribute']").InnerText;
+                    if (header.Contains("Mesto:"))
+                    {
+                        city = node.SelectSingleNode(infoValueSelector).InnerText;
+                    }
+                    else if (header.Contains("Kratko ime:"))
+                    {
+                        shortName = node.SelectSingleNode(infoValueSelector).InnerText;
+                    }
+                    else if (header.Contains("Klub:"))
+                    {
+                        name = node.SelectSingleNode(infoValueSelector).InnerText;
+                    }
+                    else if (header.Contains("Dvorana:"))
+                    {
+                        var valueNode = node.SelectSingleNode(infoValueSelector);
+                        var a = valueNode.SelectSingleNode("a");
+                        arena = new Arena(a.InnerText, HttpUtility.HtmlDecode(a.GetAttributeValue("href", null)));
+                    }
+                }
+
+                return new Team(
+                    name,
+                    shortName,
+                    city,
+                    arena,
+                    coach,
+                    players: null
+                    );
+            });
+        }
+
+        internal async Task<Player[]> GetPlayersAsync(DomResultItem domItem, CancellationToken ct)
+        {
+            var html = new HtmlDocument();
+            html.LoadHtml(domItem.Content);
+
             return new Player[0];
         }
         public async ValueTask<Standings[]> GetStandingsAsync(string address, CancellationToken ct)

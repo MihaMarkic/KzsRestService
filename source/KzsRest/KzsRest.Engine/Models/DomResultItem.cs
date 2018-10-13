@@ -3,7 +3,7 @@ using Righthand.Immutable;
 
 namespace KzsRest.Engine.Models
 {
-    [DebuggerDisplay("Id,nq")]
+    [DebuggerDisplay("{Id,nq}")]
     public readonly struct DomResultItem
     {
         public string Id { get; }

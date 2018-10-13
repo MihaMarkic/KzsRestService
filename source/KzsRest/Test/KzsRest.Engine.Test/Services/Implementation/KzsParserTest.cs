@@ -181,5 +181,24 @@ namespace KzsRest.Engine.Test.Services.Implementation
                 Assert.That(actual.Right.HasValue, Is.False);
             }
         }
+
+        [TestFixture]
+        public class GetTeamDataAsync : KzsParserTest
+        {
+            // ![](A6AE0C321B566CC5879B0886165AD67E.png)
+            DomResultItem domItem => new DomResultItem("Root", GetSampleContent("team_root"));
+
+            [Test]
+            public async Task ExtractsSampleData()
+            {
+                var actual = await KzsParser.GetTeamDataAsync(domItem, default);
+
+                Assert.That(actual.Name, Is.EqualTo("Nova Gorica mladi"));
+                Assert.That(actual.ShortName, Is.EqualTo("Nova Gorica"));
+                Assert.That(actual.City, Is.EqualTo("Nova Gorica"));
+                Assert.That(actual.Coach, Is.Null);
+                Assert.That(actual.Arena, Is.EqualTo(new Arena("ŠD OŠ Milojke Štrukelj", "http://www.kzs.si/incl?id=119&arena_id=7593")));
+            }
+        }
     }
 }

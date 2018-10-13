@@ -34,13 +34,23 @@ namespace KzsRest.Engine.Test.Services.Implementation
                 Assert.That(actual.Result.Value, Is.EqualTo(new DomResultItem("Root", "Test")));
             }
             [Test]
-            public void WhenSingleContentAndStartsAtBeginning_IndexIsMinusOne()
+            public void WhenRandomTextBeforeRootContentAndStartsAtBeginning_ParsesCorrectly()
             {
-                string source = $"#Root#{ConvertToBase64("Test")}";
+
+                string source = $"Bu bla bla #Root#{ConvertToBase64("Test")}";
 
                 var actual = Target.ParseItem(source, 0);
 
-                Assert.That(actual.Index, Is.EqualTo(-1));
+                Assert.That(actual.Result.Value, Is.EqualTo(new DomResultItem("Root", "Test")));
+            }
+            [Test]
+            public void WhenSingleContentAndStartsAtBeginning_IndexEndOfText()
+            {
+                string source = $"#Root#{ConvertToBase64("Test")}#";
+
+                var actual = Target.ParseItem(source, 0);
+
+                Assert.That(actual.Index, Is.EqualTo(source.Length));
             }
             [Test]
             public void WhenNoData_ReturnsNullResult()
@@ -59,10 +69,10 @@ namespace KzsRest.Engine.Test.Services.Implementation
                 Assert.That(actual.Result.Value, Is.EqualTo(new DomResultItem("Root", "Test")));
             }
             [Test]
-            public void WhenTwoContentsAndStartsAtSecond_MovesIndexToStartOfSecond()
+            public void WhenTwoContentsAndStartsAtSecond_MovesIndexToEndOfFirstContent()
             {
-                string source1 = $"#Root#{ConvertToBase64("Test")}";
-                string source2 = $"#Second#{ConvertToBase64("SecondTest")}";
+                string source1 = $"#Root#{ConvertToBase64("Test")}#";
+                string source2 = $"#Second#{ConvertToBase64("SecondTest")}#";
 
                 var actual = Target.ParseItem(source1 + source2, 0);
 
@@ -86,7 +96,7 @@ namespace KzsRest.Engine.Test.Services.Implementation
             public void WhenSingleContent_ParsesCorrectly()
             {
 
-                string source = $"#Root#{ConvertToBase64("Test")}";
+                string source = $"#Root#{ConvertToBase64("Test")}#";
 
                 var actual = Target.ParseResult(source);
 
@@ -96,7 +106,7 @@ namespace KzsRest.Engine.Test.Services.Implementation
             [Test]
             public void WhenTwoContents_ParsesBoth()
             {
-                string source = $"#Root#{ConvertToBase64("Test")}#Second#{ConvertToBase64("SecondTest")}";
+                string source = $"#Root#{ConvertToBase64("Test")}##Second#{ConvertToBase64("SecondTest")}#";
 
                 var actual = Target.ParseResult(source);
 

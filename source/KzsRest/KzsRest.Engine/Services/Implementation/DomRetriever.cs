@@ -1,6 +1,7 @@
 ﻿using Flurl;
 using KzsRest.Engine.Models;
 using KzsRest.Engine.Services.Abstract;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -18,13 +19,15 @@ namespace KzsRest.Engine.Services.Implementation
     /// </summary>
     public class DomRetriever : IDomRetriever
     {
-        const string Root = "https://www.kzs.si/";
+        const string Root = "http://www.kzs.si/";
         readonly IConvert convert;
         readonly ISystem system;
-        public DomRetriever(IConvert convert, ISystem system)
+        readonly ILogger<KzsParser> logger;
+        public DomRetriever(IConvert convert, ISystem system, ILogger<KzsParser> logger)
         {
             this.convert = convert;
             this.system = system;
+            this.logger = logger;
         }
         public Task<DomResultItem[]> GetDomForAsync(string relativeAddress, CancellationToken ct, params string[] args)
         {
@@ -39,9 +42,10 @@ namespace KzsRest.Engine.Services.Implementation
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                 };
-                string address = Url.Combine(Root, "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U17/cid/100");
+                string address = Url.Combine(Root, relativeAddress);
                 string jsRoot = Path.Combine(system.ContentRootPath, "Content", "js");
-                psi.Arguments = $"--debug=false --cookies-file=\"{Path.Combine(exeRoot, "cookies.dat")}\"--disk-cache=true --disk-cache-path=\"{Path.Combine(exeRoot, "cache")}\" --load-images=false \"{Path.Combine(jsRoot, "load_and_click.js")}\" {address} {string.Join(" ", args)}";
+                psi.Arguments = $"--debug=false --cookies-file=\"{Path.Combine(exeRoot, "cookies.dat")}\"--disk-cache=true --disk-cache-path=\"{Path.Combine(exeRoot, "cache")}\" --load-images=false \"{Path.Combine(jsRoot, "load_and_click.js")}\" \"{address}\" {string.Join(" ", args)}";
+                logger.LogInformation(psi.Arguments);
                 var process = new Process()
                 {
                     StartInfo = psi,
@@ -53,9 +57,17 @@ namespace KzsRest.Engine.Services.Implementation
                 process.Start();
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
-                process.WaitForExit();
-                var items = ParseResult(result);
-                return items;
+                // times out after 30s
+                if (process.WaitForExit(30 * 1000))
+                {
+                    var items = ParseResult(result);
+                    return items;
+                }
+                else
+                {
+                    logger.LogWarning("Timeout while waiting for phantom");
+                    return new DomResultItem[0];
+                }
             });
         }
 
@@ -83,17 +95,17 @@ namespace KzsRest.Engine.Services.Implementation
             int headerStart = data.IndexOf('#', index);
             if (headerStart >= 0)
             {
-                int headerEnd = data.IndexOf('#', index + 1);
+                int headerEnd = data.IndexOf('#', headerStart + 1);
                 string id = data.Substring(headerStart + 1, headerEnd - headerStart - 1);
-                int nextHeader = data.IndexOf('#', headerEnd + 1);
+                int contentEndHeader = data.IndexOf('#', headerEnd + 1);
                 ReadOnlySpan<char> base64;
-                if (nextHeader < 0)
+                if (contentEndHeader < 0)
                 {
                     base64 = data.AsSpan().Slice(start: headerEnd + 1);
                 }
                 else
                 {
-                    base64 = data.AsSpan().Slice(start: headerEnd + 1, length: nextHeader - headerEnd - 1);
+                    base64 = data.AsSpan().Slice(start: headerEnd + 1, length: contentEndHeader - headerEnd - 1);
                 }
                 int minLength = GetBufferForBase64Length(base64);
                 var buffer = ArrayPool<byte>.Shared.Rent(minLength);
@@ -101,7 +113,7 @@ namespace KzsRest.Engine.Services.Implementation
                 {
                     if (convert.TryFromBase64Chars(base64, buffer, out int bytesWritten))
                     {
-                        return (new DomResultItem(id, Encoding.UTF8.GetString(buffer, 0, bytesWritten)), nextHeader);
+                        return (new DomResultItem(id, Encoding.UTF8.GetString(buffer, 0, bytesWritten)), contentEndHeader + 1);
                     }
                     else
                     {
