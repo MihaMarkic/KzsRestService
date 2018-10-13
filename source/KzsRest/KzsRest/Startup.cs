@@ -25,6 +25,7 @@ namespace KzsRest
             services.AddSingleton<IKzsParser, KzsParser>();
             services.AddSingleton<IDomRetriever, DomRetriever>();
             services.AddSingleton<IConvert, KzsConvert>();
+            services.AddSingleton<ISystem, KzsSystem>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

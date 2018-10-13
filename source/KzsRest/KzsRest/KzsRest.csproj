@@ -23,4 +23,16 @@
     <ProjectReference Include="..\KzsRest.Engine\KzsRest.Engine.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Content\js\base64.min.js">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\js\load_and_click.js">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\js\text-encoder-lite.js">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

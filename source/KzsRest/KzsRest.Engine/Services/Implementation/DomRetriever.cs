@@ -12,13 +12,19 @@ using System.Threading.Tasks;
 
 namespace KzsRest.Engine.Services.Implementation
 {
+    /// <summary>
+    /// Extract pages from phantomjs.
+    /// Requires Content/js/load_and_click.js, base64.min.js and text-encoder-lite.js
+    /// </summary>
     public class DomRetriever : IDomRetriever
     {
         const string Root = "https://www.kzs.si/";
         readonly IConvert convert;
-        public DomRetriever(IConvert convert)
+        readonly ISystem system;
+        public DomRetriever(IConvert convert, ISystem system)
         {
             this.convert = convert;
+            this.system = system;
         }
         public Task<DomResultItem[]> GetDomForAsync(string relativeAddress, CancellationToken ct, params string[] args)
         {
@@ -29,11 +35,13 @@ namespace KzsRest.Engine.Services.Implementation
                     UseShellExecute = false,
                     WorkingDirectory = @"D:\Utilities\phantomjs-2.1.1-windows\bin\",
                     CreateNoWindow = true,
-                    RedirectStandardOutput = true
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
                 };
                 var exeRoot = Path.GetDirectoryName(typeof(DomRetriever).Assembly.Location);
                 string address = Url.Combine(Root, "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U17/cid/100");
-                psi.Arguments = $"--debug=false --cookies-file={Path.Combine(exeRoot, "cookies.dat")} --disk-cache=true --disk-cache-path={Path.Combine(exeRoot, "cache")} --load-images=false ./load_and_click.js {address} {string.Join(" ", args)}";
+                string jsRoot = Path.Combine(system.ContentRootPath, "Content", "js");
+                psi.Arguments = $"--debug=false --cookies-file=\"{Path.Combine(exeRoot, "cookies.dat")}\"--disk-cache=true --disk-cache-path=\"{Path.Combine(exeRoot, "cache")}\" --load-images=false \"{Path.Combine(jsRoot, "load_and_click.js")}\" {address} {string.Join(" ", args)}";
                 var process = new Process()
                 {
                     StartInfo = psi,
@@ -41,8 +49,10 @@ namespace KzsRest.Engine.Services.Implementation
                 };
                 string result = "";
                 process.OutputDataReceived += (s, e) => result += e.Data;
+                process.ErrorDataReceived += (s, e) => Debug.WriteLine(e.Data);
                 process.Start();
                 process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
                 process.WaitForExit();
                 var items = ParseResult(result);
                 return items;
