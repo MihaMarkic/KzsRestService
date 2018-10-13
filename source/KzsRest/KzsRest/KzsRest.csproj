@@ -33,6 +33,9 @@
     <None Update="Content\js\text-encoder-lite.js">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+    <None Update="phantomjs.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

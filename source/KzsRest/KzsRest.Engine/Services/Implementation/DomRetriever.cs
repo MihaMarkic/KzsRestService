@@ -30,15 +30,15 @@ namespace KzsRest.Engine.Services.Implementation
         {
             return Task.Run(() =>
             {
-                var psi = new ProcessStartInfo(@"D:\Utilities\phantomjs-2.1.1-windows\bin\phantomjs.exe")
+                var exeRoot = Path.GetDirectoryName(typeof(DomRetriever).Assembly.Location);
+                var psi = new ProcessStartInfo(Path.Combine(exeRoot, "phantomjs.exe"))
                 {
                     UseShellExecute = false,
-                    WorkingDirectory = @"D:\Utilities\phantomjs-2.1.1-windows\bin\",
+                    WorkingDirectory = exeRoot,
                     CreateNoWindow = true,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                 };
-                var exeRoot = Path.GetDirectoryName(typeof(DomRetriever).Assembly.Location);
                 string address = Url.Combine(Root, "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U17/cid/100");
                 string jsRoot = Path.Combine(system.ContentRootPath, "Content", "js");
                 psi.Arguments = $"--debug=false --cookies-file=\"{Path.Combine(exeRoot, "cookies.dat")}\"--disk-cache=true --disk-cache-path=\"{Path.Combine(exeRoot, "cache")}\" --load-images=false \"{Path.Combine(jsRoot, "load_and_click.js")}\" {address} {string.Join(" ", args)}";
