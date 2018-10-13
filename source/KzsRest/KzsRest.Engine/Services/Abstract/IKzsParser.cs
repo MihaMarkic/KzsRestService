@@ -8,5 +8,6 @@ namespace KzsRest.Engine.Services.Abstract
     {
         ValueTask<Standings[]> GetStandingsAsync(string address, CancellationToken ct);
         ValueTask<KzsLeagues> GetTopLevelAsync(CancellationToken ct);
+        Task<Team> GetTeamAsync(int teamId, int seasonId, CancellationToken ct);
     }
 }

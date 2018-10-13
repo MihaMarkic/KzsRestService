@@ -1,5 +1,6 @@
 ﻿using AutoFixture;
 using HtmlAgilityPack;
+using KzsRest.Engine.Models;
 using KzsRest.Engine.Services.Abstract;
 using KzsRest.Engine.Services.Implementation;
 using NSubstitute;
@@ -20,8 +21,8 @@ namespace KzsRest.Engine.Test.Services.Implementation
             [Test]
             public async Task WhenNoData_ReturnsEmptyArray()
             {
-                var domCache = fixture.Freeze<IDomCache>();
-                domCache.GetDomForAsync(default, default, default).ReturnsForAnyArgs("");
+                var domRetriever = fixture.Freeze<IDomRetriever>();
+                domRetriever.GetDomForAsync(default, default).ReturnsForAnyArgs(new DomResultItem[0]);
 
                 var actual = await Target.GetStandingsAsync(default, default);
 
@@ -30,8 +31,11 @@ namespace KzsRest.Engine.Test.Services.Implementation
             [Test]
             public async Task WhenSixGroups_ReturnsAllSix()
             {
-                var domCache = fixture.Freeze<IDomCache>();
-                domCache.GetDomForAsync(default, default, default).ReturnsForAnyArgs(GetSampleContent(U17_Male_A));
+                var domRetriever = fixture.Freeze<IDomRetriever>();
+                domRetriever.GetDomForAsync(default, default, default).ReturnsForAnyArgs(
+                    new DomResultItem[] {
+                        new DomResultItem(id: "Root", GetSampleContent(U17_Male_A))
+                    });
 
                 var actual = await Target.GetStandingsAsync(default, default);
 

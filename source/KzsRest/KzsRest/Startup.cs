@@ -1,5 +1,6 @@
 ﻿using KzsRest.Engine.Services.Abstract;
 using KzsRest.Engine.Services.Implementation;
+using KzsRest.Services.Implementation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +24,7 @@ namespace KzsRest
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddSingleton<IKzsParser, KzsParser>();
             services.AddSingleton<IDomRetriever, DomRetriever>();
-            services.AddSingleton<IDomCache, DomCache>();
+            services.AddSingleton<IConvert, KzsConvert>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -11,33 +11,53 @@ namespace KzsRest.Engine.Services.Implementation
 {
     public class KzsParser : IKzsParser
     {
-        readonly IDomCache domCache;
-        public KzsParser(IDomCache domCache)
+        readonly IDomRetriever domRetriever;
+        public KzsParser(IDomRetriever domRetriever)
         {
-            this.domCache = domCache;
+            this.domRetriever = domRetriever;
+        }
+        public async Task<Team> GetTeamAsync(int teamId, int seasonId, CancellationToken ct)
+        {
+            // http://www.kzs.si/incl?id=967&team_id=195883&league_id=undefined&season_id=102583
+            string address = $"incl?id=967&team_id={teamId}&league_id=undefined&season_id={seasonId}";
+            var dom = await domRetriever.GetDomForAsync(address, ct);
+            var html = new HtmlDocument();
+            html.LoadHtml(dom[0].Content);
+            var players = await GetPlayersAsync(address, ct);
+            return new Team(players);
+        }
+        internal async Task<Player[]> GetPlayersAsync(string address, CancellationToken ct)
+        {
+            //var dom = await domCache.GetDomForAsync(address, TimeSpan.FromMinutes(15), ct, "'33-200-tab-3'");
+            //var html = new HtmlDocument();
+            //html.LoadHtml(dom);
+            return new Player[0];
         }
         public async ValueTask<Standings[]> GetStandingsAsync(string address, CancellationToken ct)
         {
-            var dom = await domCache.GetDomForAsync(address, TimeSpan.FromMinutes(15), ct);
-            var html = new HtmlDocument();
-            html.LoadHtml(dom);
-
-            var standingsContainer = html.DocumentNode.SelectSingleNode("//div[@id='33-301-standings-container']");
-            if (standingsContainer != null)
+            var dom = await domRetriever.GetDomForAsync(address, ct);
+            if (dom.Length > 0)
             {
-                var titles = standingsContainer.SelectNodes("//div[@class='mbt-v2-table-header-before-table']");
-                if (titles?.Count > 0)
+                var html = new HtmlDocument();
+                html.LoadHtml(dom[0].Content);
+
+                var standingsContainer = html.DocumentNode.SelectSingleNode("//div[@id='33-301-standings-container']");
+                if (standingsContainer != null)
                 {
-                    var standings = new Standings[titles.Count];
-                    for (int i = 0; i < titles.Count; i++)
+                    var titles = standingsContainer.SelectNodes("//div[@class='mbt-v2-table-header-before-table']");
+                    if (titles?.Count > 0)
                     {
-                        var standing = ExtractStanding(titles[i]);
-                        if (standing != null)
+                        var standings = new Standings[titles.Count];
+                        for (int i = 0; i < titles.Count; i++)
                         {
-                            standings[i] = standing;
+                            var standing = ExtractStanding(titles[i]);
+                            if (standing != null)
+                            {
+                                standings[i] = standing;
+                            }
                         }
+                        return standings;
                     }
-                    return standings;
                 }
             }
             return new Standings[0];
@@ -50,7 +70,7 @@ namespace KzsRest.Engine.Services.Implementation
                 return null;
             }
             var table = tableDiv.SelectSingleNode("table");
-            if (table.Name != "table")
+            if (table?.Name != "table")
             {
                 return null;
             }
