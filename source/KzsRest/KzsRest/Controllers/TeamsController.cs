@@ -1,6 +1,9 @@
-﻿using KzsRest.Engine.Services.Abstract;
+﻿using KzsRest.Engine.Keys;
+using KzsRest.Engine.Services.Abstract;
 using KzsRest.Models;
+using KzsRest.Services.Abstract;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,16 +14,20 @@ namespace KzsRest.Controllers
     public class TeamsController : ControllerBase
     {
         readonly IKzsParser kzsParser;
-        public TeamsController(IKzsParser kzsParser)
+        readonly ICacheService cacheService;
+        public TeamsController(IKzsParser kzsParser, ICacheService cacheService)
         {
             this.kzsParser = kzsParser;
+            this.cacheService = cacheService;
         }
-
 
         [HttpGet("{teamId:int}/season/{seasonId:int}")]
         public async Task<ActionResult<Team>> GetTeam(int teamId, int seasonId)
         {
-            var result = await kzsParser.GetTeamAsync(teamId, seasonId, CancellationToken.None);
+            var result = await cacheService.GetDataAsync(
+                new TeamKey(teamId, seasonId), 
+                TimeSpan.FromMinutes(15),
+                (k, ct) => kzsParser.GetTeamAsync(k, ct), CancellationToken.None);
             return result;
         }
     }

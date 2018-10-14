@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using KzsRest.Engine.Keys;
 using KzsRest.Engine.Services.Abstract;
 using KzsRest.Models;
 using Microsoft.Extensions.Logging;
@@ -22,12 +23,12 @@ namespace KzsRest.Engine.Services.Implementation
             this.domRetriever = domRetriever;
             this.logger = logger;
         }
-        public async Task<Team> GetTeamAsync(int teamId, int seasonId, CancellationToken ct)
+        public async Task<Team> GetTeamAsync(TeamKey key, CancellationToken ct)
         {
             //const string fixturesAndStandingTab = "33-200-tab-2";
             const string playersTab = "33-200-tab-3";
             // http://www.kzs.si/incl?id=967&team_id=195883&league_id=undefined&season_id=102583
-            string address = $"incl?id=967&team_id={teamId}&league_id=undefined&season_id={seasonId}";
+            string address = $"incl?id=967&team_id={key.TeamId}&league_id=undefined&season_id={key.SeasonId}";
             var dom = await domRetriever.GetDomForAsync(address, ct, playersTab);
             var rootPage = dom.Cast<DomResultItem?>().SingleOrDefault(d => string.Equals(d.Value.Id, Root, StringComparison.Ordinal));
             //var fixturesAndResultsPage = dom.Cast<DomResultItem?>().SingleOrDefault(d => string.Equals(d.Value.Id, fixturesAndStandingTab, StringComparison.Ordinal));
@@ -40,16 +41,7 @@ namespace KzsRest.Engine.Services.Implementation
             var teamTask = GetTeamDataAsync(rootPage.Value, ct);
             var lastResultsTask = GetLastTeamResultsAsync(rootPage.Value, ct);
             var fixturesTask = GetShortGameFixturesAsync(rootPage.Value, ct);
-            Task<Player[]> playersTask;
-            if (playersPage.HasValue)
-            {
-                playersTask = GetPlayersAsync(playersPage.Value, ct);
-            }
-            else
-            {
-                logger.LogWarning("No players page found");
-                playersTask = null;
-            }
+            var playersTask = GetPlayersAsync(playersPage.Value, ct);
             var team = await teamTask;
             try
             {
@@ -59,6 +51,7 @@ namespace KzsRest.Engine.Services.Implementation
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "Failed retrieving lastResults");
+                throw;
             }
             try
             {
@@ -68,11 +61,17 @@ namespace KzsRest.Engine.Services.Implementation
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "Failed retrieving fixtures");
+                throw;
             }
-            if (playersTask != null)
+            try
             {
                 var players = await playersTask;
                 team = team.Clone(players: players);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed retrieving players");
+                throw;
             }
             return team;
         }
@@ -220,7 +219,7 @@ namespace KzsRest.Engine.Services.Implementation
             return new Player(playerId, number, fullName, nationalityCode, nationality, birthYear, position != "-" ? position: null, height);
         }
 
-        public async ValueTask<Standings[]> GetStandingsAsync(string address, CancellationToken ct)
+        public async Task<Standings[]> GetStandingsAsync(string address, CancellationToken ct)
         {
             var dom = await domRetriever.GetDomForAsync(address, ct);
             if (dom.Length > 0)
@@ -229,25 +228,29 @@ namespace KzsRest.Engine.Services.Implementation
                 html.LoadHtml(dom[0].Content);
 
                 var standingsContainer = html.DocumentNode.SelectSingleNode("//div[@id='33-301-standings-container']");
-                if (standingsContainer != null)
+                var titles = standingsContainer.SelectNodes("//div[@class='mbt-v2-table-header-before-table']");
+                if (titles?.Count > 0)
                 {
-                    var titles = standingsContainer.SelectNodes("//div[@class='mbt-v2-table-header-before-table']");
-                    if (titles?.Count > 0)
+                    var standings = new Standings[titles.Count];
+                    for (int i = 0; i < titles.Count; i++)
                     {
-                        var standings = new Standings[titles.Count];
-                        for (int i = 0; i < titles.Count; i++)
+                        var standing = ExtractStanding(titles[i]);
+                        if (standing != null)
                         {
-                            var standing = ExtractStanding(titles[i]);
-                            if (standing != null)
-                            {
-                                standings[i] = standing;
-                            }
+                            standings[i] = standing;
                         }
-                        return standings;
                     }
+                    return standings;
+                }
+                else
+                {
+                    return new Standings[0];
                 }
             }
-            return new Standings[0];
+            else
+            {
+                throw new Exception("No DOM retrieved");
+            }
         }
         internal static Standings ExtractStanding(HtmlNode node)
         {
