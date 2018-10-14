@@ -399,15 +399,15 @@ namespace KzsRest.Engine.Services.Implementation
                     majorLeagues: null,
                     minorLeagues: new MinorLeague[]
                     {
-                        new MinorLeague(100, 17, Gender.Male, new MinorLeagueDivision[]{
+                        new MinorLeague(100, 17, Gender.Men, new MinorLeagueDivision[]{
                             new MinorLeagueDivision(177,
-                                "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U17/Fantje-U17---1.-SKL/cid/177", 17, Gender.Male,
+                                "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U17/Fantje-U17---1.-SKL/cid/177", 17, Gender.Men,
                                 "Fantje U17 - 1. SKL", DivisionType.First),
                             new MinorLeagueDivision(115,
-                                "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U17/Fantje-U17---2.-SKL/cid/115", 17, Gender.Male,
+                                "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U17/Fantje-U17---2.-SKL/cid/115", 17, Gender.Men,
                                 "Fantje U17 - 2. SKL", DivisionType.Second),
                             new MinorLeagueDivision(116,
-                                "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U17/Fantje-U17---kval.-za-1.-SKL/cid/116", 17, Gender.Male,
+                                "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U17/Fantje-U17---kval.-za-1.-SKL/cid/116", 17, Gender.Men,
                                 "Fantje U17 - Kval. za 1. SKL", DivisionType.FirstQualify),
                         })
                     }
