@@ -38,6 +38,8 @@ namespace KzsRest.Engine.Services.Implementation
                 return null;
             }
             var teamTask = GetTeamDataAsync(rootPage.Value, ct);
+            var lastResultsTask = GetLastTeamResultsAsync(rootPage.Value, ct);
+            var fixturesTask = GetShortGameFixturesAsync(rootPage.Value, ct);
             Task<Player[]> playersTask;
             if (playersPage.HasValue)
             {
@@ -49,6 +51,10 @@ namespace KzsRest.Engine.Services.Implementation
                 playersTask = null;
             }
             var team = await teamTask;
+            var lastResults = await lastResultsTask;
+            //team = team.Clone(...)
+            var fixtures = await fixturesTask;
+            // team = team.Clone(...)
             if (playersTask != null)
             {
                 var players = await playersTask;

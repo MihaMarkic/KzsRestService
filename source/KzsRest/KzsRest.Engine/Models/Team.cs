@@ -12,8 +12,11 @@ namespace KzsRest.Engine.Models
         public Arena Arena { get; }
         public string Coach { get; }
         public Player[] Players { get; }
+        public GameResult[] LastResults { get; }
+        public ShortGameFixture[] Fixtures { get; }
 
-        public Team(string name, string shortName, string city, Arena arena, string coach, Player[] players)
+        public Team(string name, string shortName, string city, Arena arena, string coach, Player[] players,
+                    GameResult[] lastResults, ShortGameFixture[] fixtures)
         {
             Name = name;
             ShortName = shortName;
@@ -21,6 +24,8 @@ namespace KzsRest.Engine.Models
             Arena = arena;
             Coach = coach;
             Players = players;
+            LastResults = lastResults;
+            Fixtures = fixtures;
         }
 
         public Team Clone(Param<string>? name = null, Param<string>? shortName = null, Param<string>? city = null, Param<Arena>? arena = null, Param<string>? coach = null, Param<Player[]>? players = null)
