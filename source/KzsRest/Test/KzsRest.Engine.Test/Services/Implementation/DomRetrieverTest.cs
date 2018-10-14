@@ -1,5 +1,4 @@
 ﻿using AutoFixture;
-using KzsRest.Engine.Models;
 using KzsRest.Engine.Services.Abstract;
 using KzsRest.Engine.Services.Implementation;
 using KzsRest.Services.Implementation;

@@ -1,5 +1,4 @@
 ﻿using Flurl;
-using KzsRest.Engine.Models;
 using KzsRest.Engine.Services.Abstract;
 using Microsoft.Extensions.Logging;
 using System;

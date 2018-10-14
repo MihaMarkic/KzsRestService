@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Globalization;
 
-namespace KzsRest.Engine.TypeConverters
+namespace KzsRest.Models.TypeConverters
 {
     public class DivisionTypeConverter: TypeConverter
     {

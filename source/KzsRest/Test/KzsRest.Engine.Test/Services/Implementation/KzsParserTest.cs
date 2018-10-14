@@ -1,8 +1,8 @@
 ﻿using AutoFixture;
 using HtmlAgilityPack;
-using KzsRest.Engine.Models;
 using KzsRest.Engine.Services.Abstract;
 using KzsRest.Engine.Services.Implementation;
+using KzsRest.Models;
 using NSubstitute;
 using NUnit.Framework;
 using System;

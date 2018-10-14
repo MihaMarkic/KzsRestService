@@ -1,7 +1,7 @@
-﻿using KzsRest.Engine.TypeConverters;
+﻿using KzsRest.Models.TypeConverters;
 using System.ComponentModel;
 
-namespace KzsRest.Engine
+namespace KzsRest.Models
 {
     [TypeConverter(typeof(DivisionTypeConverter))]
     public enum DivisionType

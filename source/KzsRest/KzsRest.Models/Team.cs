@@ -1,7 +1,7 @@
 ﻿using Righthand.Immutable;
 using System.Diagnostics;
 
-namespace KzsRest.Engine.Models
+namespace KzsRest.Models
 {
     [DebuggerDisplay("{Name,nq}")]
     public class Team

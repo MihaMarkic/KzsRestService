@@ -1,5 +1,4 @@
-﻿using KzsRest.Engine.Models;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 
 namespace KzsRest.Engine.Services.Abstract

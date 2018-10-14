@@ -1,7 +1,7 @@
 ﻿using System;
 using Righthand.Immutable;
 
-namespace KzsRest.Engine.Models
+namespace KzsRest.Models
 {
     public class ShortGameFixture
     {

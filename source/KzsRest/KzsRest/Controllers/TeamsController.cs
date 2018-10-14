@@ -1,5 +1,5 @@
-﻿using KzsRest.Engine.Models;
-using KzsRest.Engine.Services.Abstract;
+﻿using KzsRest.Engine.Services.Abstract;
+using KzsRest.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using System.Threading.Tasks;

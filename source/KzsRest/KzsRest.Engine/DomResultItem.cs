@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using Righthand.Immutable;
 
-namespace KzsRest.Engine.Models
+namespace KzsRest.Engine
 {
     [DebuggerDisplay("{Id,nq}")]
     public readonly struct DomResultItem
