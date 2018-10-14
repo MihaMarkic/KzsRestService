@@ -16,6 +16,7 @@ namespace KzsRest.Engine.Services.Implementation
         const string Root = "Root";
         readonly IDomRetriever domRetriever;
         readonly ILogger<KzsParser> logger;
+        public static readonly CultureInfo SloveneCulture = new CultureInfo("sl-SI");
         public KzsParser(IDomRetriever domRetriever, ILogger<KzsParser> logger)
         {
             this.domRetriever = domRetriever;
@@ -55,11 +56,46 @@ namespace KzsRest.Engine.Services.Implementation
             }
             return team;
         }
-        internal static Task<Team> GetTeamDataAsync(DomResultItem domItem, CancellationToken ct)
+        internal static Task<GameResult[]> GetLastTeamResultsAsync(DomResultItem domItem, CancellationToken ct)
         {
-            const string infoValueSelector = "span[@class='mbt-v2-team-full-widget-main-info-value']";
             return Task.Run(() =>
             {
+                var html = new HtmlDocument();
+                html.LoadHtml(domItem.Content);
+                var rows = html.DocumentNode.SelectNodes("//table[@id='mbt-v2-team-home-results-table']/tbody/tr");
+                var result = rows.Select(r => GetTeamGameResult(r)).ToArray();
+                return result;
+            });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="root">tr node for the given game</param>
+        /// <returns></returns>
+        internal static GameResult GetTeamGameResult(HtmlNode root)
+        {
+            var dateNode = root.Element("td").Element("a");
+            int gameId = int.Parse(dateNode.GetAttributeValue("game_id", null));
+            string dateText = dateNode.FirstChild.InnerText;
+            string timeText = dateNode.Element("span").InnerText;
+            DateTimeOffset gameDate = DateTimeOffset.Parse($"{dateText} {timeText}", SloveneCulture);
+            var opponentNode = root.SelectSingleNode("td[2]");
+            bool isTransfer = string.Equals(opponentNode.Element("span").InnerText, "pri");
+            var opponentTeamNode = opponentNode.Element("a");
+            var opponentTeamId = int.Parse(opponentTeamNode.GetAttributeValue("team_id", null));
+            var scoreNode = root.SelectSingleNode("td[3]/a");
+            string scoreText = scoreNode.InnerText;
+            var scoreParts = scoreText.Split(':');
+            int homeScore = int.Parse(scoreParts[0]);
+            int opponentScore = int.Parse(scoreParts[1]);
+            return new GameResult(gameId, gameDate, !isTransfer, homeScore, opponentScore, opponentTeamId, opponentTeamNode.InnerText);
+        }
+        internal static Task<Team> GetTeamDataAsync(DomResultItem domItem, CancellationToken ct)
+        {
+            return Task.Run(() =>
+            {
+                const string infoValueSelector = "span[@class='mbt-v2-team-full-widget-main-info-value']";
                 var html = new HtmlDocument();
                 html.LoadHtml(domItem.Content);
                 var root = html.DocumentNode.SelectSingleNode("//div[@id='33-200-qualizer-1']");
@@ -85,6 +121,10 @@ namespace KzsRest.Engine.Services.Implementation
                     else if (header.Contains("Klub:"))
                     {
                         name = node.SelectSingleNode(infoValueSelector).InnerText;
+                    }
+                    else if (header.Contains("Trener:"))
+                    {
+                        coach = node.SelectSingleNode(infoValueSelector).InnerText;
                     }
                     else if (header.Contains("Dvorana:"))
                     {

@@ -5,6 +5,7 @@ using KzsRest.Engine.Services.Abstract;
 using KzsRest.Engine.Services.Implementation;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -198,6 +199,41 @@ namespace KzsRest.Engine.Test.Services.Implementation
                 Assert.That(actual.City, Is.EqualTo("Nova Gorica"));
                 Assert.That(actual.Coach, Is.Null);
                 Assert.That(actual.Arena, Is.EqualTo(new Arena("ŠD OŠ Milojke Štrukelj", "http://www.kzs.si/incl?id=119&arena_id=7593")));
+            }
+        }
+        [TestFixture]
+        public class GetLastTeamResultsAsync: KzsParserTest
+        {
+            // ![](F937C186BDD85A7BE8D7A8EC74B98D7C.png)
+            DomResultItem domItem => new DomResultItem("Root", GetSampleContent("team_root"));
+            [Test]
+            public async Task ExtractsSampleData()
+            {
+                var actual = await KzsParser.GetLastTeamResultsAsync(domItem, default);
+
+                Assert.That(actual.Length, Is.EqualTo(3));
+            }
+        }
+        [TestFixture]
+        public class GetTeamGameResult : KzsParserTest
+        {
+            DomResultItem domItem => new DomResultItem("Root", GetSampleContent("team_root"));
+            [Test]
+            public void ExtractsSampleData()
+            {
+                var html = new HtmlDocument();
+                html.LoadHtml(domItem.Content);
+                var root = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-team-home-results-table']/tbody/tr[1]");
+
+                var actual = KzsParser.GetTeamGameResult(root);
+
+                Assert.That(actual.Date, Is.EqualTo(DateTimeOffset.Parse("13.10.2018 9:30", KzsParser.SloveneCulture)));
+                Assert.That(actual.GameId, Is.EqualTo(4240435));
+                Assert.That(actual.IsHomeGame, Is.False);
+                Assert.That(actual.HomeScore, Is.EqualTo(85));
+                Assert.That(actual.OpponentScore, Is.EqualTo(49));
+                Assert.That(actual.OpponentId, Is.EqualTo(196003));
+                Assert.That(actual.OpponentName, Is.EqualTo("Stražišče Kranj"));
             }
         }
     }
