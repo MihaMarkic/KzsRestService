@@ -54,7 +54,15 @@ namespace KzsRest.Engine.Services.Implementation
                 string result = "";
                 process.OutputDataReceived += (s, e) => result += e.Data;
                 process.ErrorDataReceived += (s, e) => Debug.WriteLine(e.Data);
-                process.Start();
+                try
+                {
+                    process.Start();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to start phantomjs");
+                    return new DomResultItem[0];
+                }
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
                 // times out after 30s
