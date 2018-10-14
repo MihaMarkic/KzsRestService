@@ -24,13 +24,13 @@ namespace KzsRest.Engine.Services.Implementation
         }
         public async Task<Team> GetTeamAsync(int teamId, int seasonId, CancellationToken ct)
         {
-            const string fixturesAndStandingTab = "33-200-tab-2";
+            //const string fixturesAndStandingTab = "33-200-tab-2";
             const string playersTab = "33-200-tab-3";
             // http://www.kzs.si/incl?id=967&team_id=195883&league_id=undefined&season_id=102583
             string address = $"incl?id=967&team_id={teamId}&league_id=undefined&season_id={seasonId}";
-            var dom = await domRetriever.GetDomForAsync(address, ct, fixturesAndStandingTab, playersTab);
+            var dom = await domRetriever.GetDomForAsync(address, ct, playersTab);
             var rootPage = dom.Cast<DomResultItem?>().SingleOrDefault(d => string.Equals(d.Value.Id, Root, StringComparison.Ordinal));
-            var fixturesAndResultsPage = dom.Cast<DomResultItem?>().SingleOrDefault(d => string.Equals(d.Value.Id, fixturesAndStandingTab, StringComparison.Ordinal));
+            //var fixturesAndResultsPage = dom.Cast<DomResultItem?>().SingleOrDefault(d => string.Equals(d.Value.Id, fixturesAndStandingTab, StringComparison.Ordinal));
             var playersPage = dom.Cast<DomResultItem?>().SingleOrDefault(d => string.Equals(d.Value.Id, playersTab, StringComparison.Ordinal));
             if (!rootPage.HasValue)
             {
@@ -51,10 +51,24 @@ namespace KzsRest.Engine.Services.Implementation
                 playersTask = null;
             }
             var team = await teamTask;
-            var lastResults = await lastResultsTask;
-            //team = team.Clone(...)
-            var fixtures = await fixturesTask;
-            // team = team.Clone(...)
+            try
+            {
+                var lastResults = await lastResultsTask;
+                team = team.Clone(lastResults: lastResults);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed retrieving lastResults");
+            }
+            try
+            {
+                var fixtures = await fixturesTask;
+                team = team.Clone(fixtures: fixtures);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed retrieving fixtures");
+            }
             if (playersTask != null)
             {
                 var players = await playersTask;
@@ -161,7 +175,8 @@ namespace KzsRest.Engine.Services.Implementation
                     {
                         var valueNode = node.SelectSingleNode(infoValueSelector);
                         var a = valueNode.SelectSingleNode("a");
-                        arena = new Arena(a.InnerText, HttpUtility.HtmlDecode(a.GetAttributeValue("href", null)));
+                        int arenaId = int.Parse(a.GetAttributeValue("arena_id", null));
+                        arena = new Arena(arenaId, a.InnerText, HttpUtility.HtmlDecode(a.GetAttributeValue("href", null)));
                     }
                 }
 
@@ -171,44 +186,38 @@ namespace KzsRest.Engine.Services.Implementation
                     city,
                     arena,
                     coach,
-                    players: null
+                    players: null,
+                    lastResults: null,
+                    fixtures: null
                     );
             });
         }
 
-        internal async Task<Player[]> GetPlayersAsync(DomResultItem domItem, CancellationToken ct)
+        internal static Task<Player[]> GetPlayersAsync(DomResultItem domItem, CancellationToken ct)
         {
-            var html = new HtmlDocument();
-            html.LoadHtml(domItem.Content);
-
-            return new Player[0];
+            return Task.Run(() =>
+            {
+                var html = new HtmlDocument();
+                html.LoadHtml(domItem.Content);
+                var rows = html.DocumentNode.SelectNodes("//table[@id='mbt-v2-team-roster-table']/tbody/tr");
+                var result = rows.Select(r => GetPlayer(r)).ToArray();
+                return result;
+            });
         }
         internal static Player GetPlayer(HtmlNode domItem)
         {
             var cellNodes = domItem.SelectNodes("td");
-            int? number = null;
-            if (int.TryParse(cellNodes[0].InnerText, out var tempNumber))
-            {
-                number = tempNumber;
-            }
+            int? number = ParseNullableInt(cellNodes[0].InnerText);
             var nameNode = cellNodes[1].SelectSingleNode("a");
-            string name = nameNode.InnerText;
+            string fullName = nameNode.InnerText;
             int playerId = int.Parse(nameNode.GetAttributeValue("player_id", null));
-            int? birthYear = null;
-            if (int.TryParse(cellNodes[2].InnerText, out var tempBirthYear))
-            {
-                birthYear = tempBirthYear;
-            }
+            int? birthYear = ParseNullableInt(cellNodes[2].InnerText);
             var nationalityNode = cellNodes[3].SelectSingleNode("img");
             string nationality = nationalityNode.GetAttributeValue("title", null);
             string nationalityCode = nationalityNode.GetAttributeValue("alt", null);
-            string position = cellNodes[4].InnerText;
-            int? height = null;
-            if (int.TryParse(cellNodes[5].InnerText, out var tempHeight))
-            {
-                height = tempHeight;
-            }
-            return new Player();
+            string position = cellNodes[4].InnerText.Trim('\r','\n',' ', '\t');
+            int? height = ParseNullableInt(cellNodes[5].InnerText.Trim('\r', '\n', ' ', 'c', 'm', '\t'));
+            return new Player(playerId, number, fullName, nationalityCode, nationality, birthYear, position != "-" ? position: null, height);
         }
 
         public async ValueTask<Standings[]> GetStandingsAsync(string address, CancellationToken ct)
@@ -403,6 +412,15 @@ namespace KzsRest.Engine.Services.Implementation
                         })
                     }
                 ));
+        }
+
+        internal static int? ParseNullableInt(string text)
+        {
+            if (int.TryParse(text, out var result))
+            {
+                return result;
+            }
+            return null;
         }
     }
 }

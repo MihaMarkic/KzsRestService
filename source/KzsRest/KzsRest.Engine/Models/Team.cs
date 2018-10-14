@@ -28,21 +28,23 @@ namespace KzsRest.Engine.Models
             Fixtures = fixtures;
         }
 
-        public Team Clone(Param<string>? name = null, Param<string>? shortName = null, Param<string>? city = null, Param<Arena>? arena = null, Param<string>? coach = null, Param<Player[]>? players = null)
+        public Team Clone(Param<string>? name = null, Param<string>? shortName = null, Param<string>? city = null, Param<Arena>? arena = null, Param<string>? coach = null, Param<Player[]>? players = null, Param<GameResult[]>? lastResults = null, Param<ShortGameFixture[]>? fixtures = null)
         {
             return new Team(name.HasValue ? name.Value.Value : Name,
 				shortName.HasValue ? shortName.Value.Value : ShortName,
 				city.HasValue ? city.Value.Value : City,
 				arena.HasValue ? arena.Value.Value : Arena,
 				coach.HasValue ? coach.Value.Value : Coach,
-				players.HasValue ? players.Value.Value : Players);
+				players.HasValue ? players.Value.Value : Players,
+				lastResults.HasValue ? lastResults.Value.Value : LastResults,
+				fixtures.HasValue ? fixtures.Value.Value : Fixtures);
         }
 
         public override bool Equals(object obj)
         {
             if (obj == null || GetType() != obj.GetType()) return false;
             var o = (Team)obj;
-            return Equals(Name, o.Name) && Equals(ShortName, o.ShortName) && Equals(City, o.City) && Equals(Arena, o.Arena) && Equals(Coach, o.Coach) && Equals(Players, o.Players);}
+            return Equals(Name, o.Name) && Equals(ShortName, o.ShortName) && Equals(City, o.City) && Equals(Arena, o.Arena) && Equals(Coach, o.Coach) && Equals(Players, o.Players) && Equals(LastResults, o.LastResults) && Equals(Fixtures, o.Fixtures);}
 
         public override int GetHashCode()
         {
@@ -55,6 +57,8 @@ namespace KzsRest.Engine.Models
 				hash = hash * 37 + (Arena != null ? Arena.GetHashCode() : 0);
 				hash = hash * 37 + (Coach != null ? Coach.GetHashCode() : 0);
 				hash = hash * 37 + (Players != null ? Players.GetHashCode() : 0);
+				hash = hash * 37 + (LastResults != null ? LastResults.GetHashCode() : 0);
+				hash = hash * 37 + (Fixtures != null ? Fixtures.GetHashCode() : 0);
 				return hash;
 			}
         }

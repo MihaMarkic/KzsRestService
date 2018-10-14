@@ -145,3 +145,73 @@
 2018-10-13 20:18:09.0586 Info Configured from an XML element in D:\GitProjects\Righthand\KzsRestService\source\KzsRest\KzsRest\bin\Debug\netcoreapp2.1\nlog.config...
 2018-10-13 20:18:09.0752 Warn Unused target detected. Add a rule for this target to the configuration. TargetName: logfile
 2018-10-13 20:18:09.0752 Info Found 34 configuration items
+2018-10-14 16:45:38.3485 Info Message Template Auto Format enabled
+2018-10-14 16:45:38.3485 Info Loading assembly: NLog.Web.AspNetCore
+2018-10-14 16:45:38.5065 Info Adding target File Target[logfile]
+2018-10-14 16:45:38.5309 Info Adding target Debugger Target[debugger]
+2018-10-14 16:45:38.5393 Info Configured from an XML element in D:\GitProjects\Righthand\KzsRestService\source\KzsRest\KzsRest\bin\Debug\netcoreapp2.1\nlog.config...
+2018-10-14 16:45:38.5516 Warn Unused target detected. Add a rule for this target to the configuration. TargetName: logfile
+2018-10-14 16:45:38.5516 Info Found 34 configuration items
+2018-10-14 16:48:20.8551 Info Message Template Auto Format enabled
+2018-10-14 16:48:20.8648 Info Loading assembly: NLog.Web.AspNetCore
+2018-10-14 16:48:20.9602 Info Adding target File Target[logfile]
+2018-10-14 16:48:20.9708 Info Adding target Debugger Target[debugger]
+2018-10-14 16:48:20.9708 Info Configured from an XML element in D:\GitProjects\Righthand\KzsRestService\source\KzsRest\KzsRest\bin\Debug\netcoreapp2.1\nlog.config...
+2018-10-14 16:48:20.9872 Warn Unused target detected. Add a rule for this target to the configuration. TargetName: logfile
+2018-10-14 16:48:20.9872 Info Found 34 configuration items
+2018-10-14 16:55:14.4923 Info Message Template Auto Format enabled
+2018-10-14 16:55:14.5039 Info Loading assembly: NLog.Web.AspNetCore
+2018-10-14 16:55:14.5981 Info Adding target File Target[logfile]
+2018-10-14 16:55:14.5981 Info Adding target Debugger Target[debugger]
+2018-10-14 16:55:14.6136 Info Configured from an XML element in D:\GitProjects\Righthand\KzsRestService\source\KzsRest\KzsRest\bin\Debug\netcoreapp2.1\nlog.config...
+2018-10-14 16:55:14.6136 Warn Unused target detected. Add a rule for this target to the configuration. TargetName: logfile
+2018-10-14 16:55:14.6291 Info Found 34 configuration items
+2018-10-14 16:55:52.8655 Info Message Template Auto Format enabled
+2018-10-14 16:55:52.8655 Info Loading assembly: NLog.Web.AspNetCore
+2018-10-14 16:55:52.9506 Info Adding target File Target[logfile]
+2018-10-14 16:55:52.9623 Info Adding target Debugger Target[debugger]
+2018-10-14 16:55:52.9701 Info Configured from an XML element in D:\GitProjects\Righthand\KzsRestService\source\KzsRest\KzsRest\bin\Debug\netcoreapp2.1\nlog.config...
+2018-10-14 16:55:52.9701 Warn Unused target detected. Add a rule for this target to the configuration. TargetName: logfile
+2018-10-14 16:55:52.9964 Info Found 34 configuration items
+2018-10-14 17:43:48.3353 Info Message Template Auto Format enabled
+2018-10-14 17:43:48.3448 Info Loading assembly: NLog.Web.AspNetCore
+2018-10-14 17:43:48.4804 Info Adding target File Target[logfile]
+2018-10-14 17:43:48.5036 Info Adding target Debugger Target[debugger]
+2018-10-14 17:43:48.5036 Info Configured from an XML element in D:\GitProjects\Righthand\KzsRestService\source\KzsRest\KzsRest\bin\Debug\netcoreapp2.1\nlog.config...
+2018-10-14 17:43:48.5235 Warn Unused target detected. Add a rule for this target to the configuration. TargetName: logfile
+2018-10-14 17:43:48.5313 Info Found 34 configuration items
+2018-10-14 17:45:46.3853 Info Message Template Auto Format enabled
+2018-10-14 17:45:46.3946 Info Loading assembly: NLog.Web.AspNetCore
+2018-10-14 17:45:46.5200 Info Adding target File Target[logfile]
+2018-10-14 17:45:46.5200 Info Adding target Debugger Target[debugger]
+2018-10-14 17:45:46.5389 Info Configured from an XML element in D:\GitProjects\Righthand\KzsRestService\source\KzsRest\KzsRest\bin\Debug\netcoreapp2.1\nlog.config...
+2018-10-14 17:45:46.5536 Warn Unused target detected. Add a rule for this target to the configuration. TargetName: logfile
+2018-10-14 17:45:46.5536 Info Found 34 configuration items
+2018-10-14 17:46:44.4915 Info Message Template Auto Format enabled
+2018-10-14 17:46:44.4915 Info Loading assembly: NLog.Web.AspNetCore
+2018-10-14 17:46:44.5688 Info Adding target File Target[logfile]
+2018-10-14 17:46:44.5688 Info Adding target Debugger Target[debugger]
+2018-10-14 17:46:44.5814 Info Configured from an XML element in D:\GitProjects\Righthand\KzsRestService\source\KzsRest\KzsRest\bin\Debug\netcoreapp2.1\nlog.config...
+2018-10-14 17:46:44.5814 Warn Unused target detected. Add a rule for this target to the configuration. TargetName: logfile
+2018-10-14 17:46:44.5956 Info Found 34 configuration items
+2018-10-14 17:47:52.2880 Info Message Template Auto Format enabled
+2018-10-14 17:47:52.3001 Info Loading assembly: NLog.Web.AspNetCore
+2018-10-14 17:47:52.4356 Info Adding target File Target[logfile]
+2018-10-14 17:47:52.4549 Info Adding target Debugger Target[debugger]
+2018-10-14 17:47:52.4549 Info Configured from an XML element in D:\GitProjects\Righthand\KzsRestService\source\KzsRest\KzsRest\bin\Debug\netcoreapp2.1\nlog.config...
+2018-10-14 17:47:52.4824 Warn Unused target detected. Add a rule for this target to the configuration. TargetName: logfile
+2018-10-14 17:47:52.4905 Info Found 34 configuration items
+2018-10-14 17:49:03.1956 Info Message Template Auto Format enabled
+2018-10-14 17:49:03.2037 Info Loading assembly: NLog.Web.AspNetCore
+2018-10-14 17:49:03.2737 Info Adding target File Target[logfile]
+2018-10-14 17:49:03.2916 Info Adding target Debugger Target[debugger]
+2018-10-14 17:49:03.2983 Info Configured from an XML element in D:\GitProjects\Righthand\KzsRestService\source\KzsRest\KzsRest\bin\Debug\netcoreapp2.1\nlog.config...
+2018-10-14 17:49:03.2983 Warn Unused target detected. Add a rule for this target to the configuration. TargetName: logfile
+2018-10-14 17:49:03.2983 Info Found 34 configuration items
+2018-10-14 17:51:10.2351 Info Message Template Auto Format enabled
+2018-10-14 17:51:10.2351 Info Loading assembly: NLog.Web.AspNetCore
+2018-10-14 17:51:10.3367 Info Adding target File Target[logfile]
+2018-10-14 17:51:10.3450 Info Adding target Debugger Target[debugger]
+2018-10-14 17:51:10.3450 Info Configured from an XML element in D:\GitProjects\Righthand\KzsRestService\source\KzsRest\KzsRest\bin\Debug\netcoreapp2.1\nlog.config...
+2018-10-14 17:51:10.3663 Warn Unused target detected. Add a rule for this target to the configuration. TargetName: logfile
+2018-10-14 17:51:10.3663 Info Found 34 configuration items

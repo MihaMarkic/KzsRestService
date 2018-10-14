@@ -45,7 +45,7 @@ namespace KzsRest.Engine.Services.Implementation
                 string address = Url.Combine(Root, relativeAddress);
                 string jsRoot = Path.Combine(system.ContentRootPath, "Content", "js");
                 psi.Arguments = $"--debug=false --cookies-file=\"{Path.Combine(exeRoot, "cookies.dat")}\"--disk-cache=true --disk-cache-path=\"{Path.Combine(exeRoot, "cache")}\" --load-images=false \"{Path.Combine(jsRoot, "load_and_click.js")}\" \"{address}\" {string.Join(" ", args)}";
-                logger.LogInformation(psi.Arguments);
+                //logger.LogInformation(psi.Arguments);
                 var process = new Process()
                 {
                     StartInfo = psi,

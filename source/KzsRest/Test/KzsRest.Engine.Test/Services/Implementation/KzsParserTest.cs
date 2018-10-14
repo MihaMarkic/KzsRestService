@@ -198,7 +198,7 @@ namespace KzsRest.Engine.Test.Services.Implementation
                 Assert.That(actual.ShortName, Is.EqualTo("Nova Gorica"));
                 Assert.That(actual.City, Is.EqualTo("Nova Gorica"));
                 Assert.That(actual.Coach, Is.Null);
-                Assert.That(actual.Arena, Is.EqualTo(new Arena("ŠD OŠ Milojke Štrukelj", "http://www.kzs.si/incl?id=119&arena_id=7593")));
+                Assert.That(actual.Arena, Is.EqualTo(new Arena(7593, "ŠD OŠ Milojke Štrukelj", "http://www.kzs.si/incl?id=119&arena_id=7593")));
             }
         }
         [TestFixture]
@@ -267,6 +267,59 @@ namespace KzsRest.Engine.Test.Services.Implementation
                 Assert.That(actual.IsHomeGame, Is.True);
                 Assert.That(actual.OpponentId, Is.EqualTo(195973));
                 Assert.That(actual.OpponentName, Is.EqualTo("Grosuplje A"));
+            }
+        }
+        [TestFixture]
+        public class GetPlayer : KzsParserTest
+        {
+            // ![](7D3D6999B2C6EB2438F10D8D84EF88DB.png)
+            DomResultItem domItem => new DomResultItem("Root", GetSampleContent("team_players"));
+            [Test]
+            public void ExtractsPlayerWithoutHeight()
+            {
+                var html = new HtmlDocument();
+                html.LoadHtml(domItem.Content);
+                var root = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-team-roster-table']/tbody/tr[1]");
+
+                var actual = KzsParser.GetPlayer(root);
+
+                Assert.That(actual.Number, Is.Null);
+                Assert.That(actual.FullName, Is.EqualTo("Matej Bunc"));
+                Assert.That(actual.BirthYear, Is.EqualTo(2002));
+                Assert.That(actual.NationalityCode, Is.EqualTo("SI"));
+                Assert.That(actual.Nationality, Is.EqualTo("Slovenija"));
+                Assert.That(actual.Position, Is.Null);
+                Assert.That(actual.Height.HasValue, Is.False);
+            }
+            [Test]
+            public void ExtractsPlayerWithHeight()
+            {
+                var html = new HtmlDocument();
+                html.LoadHtml(domItem.Content);
+                var root = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-team-roster-table']/tbody/tr[9]");
+
+                var actual = KzsParser.GetPlayer(root);
+
+                Assert.That(actual.Number, Is.Null);
+                Assert.That(actual.FullName, Is.EqualTo("Luka Ščuka"));
+                Assert.That(actual.BirthYear, Is.EqualTo(2002));
+                Assert.That(actual.NationalityCode, Is.EqualTo("SI"));
+                Assert.That(actual.Nationality, Is.EqualTo("Slovenija"));
+                Assert.That(actual.Position, Is.Null);
+                Assert.That(actual.Height, Is.EqualTo(201));
+            }
+        }
+        [TestFixture]
+        public class GetPlayersAsync : KzsParserTest
+        {
+            // ![](7D3D6999B2C6EB2438F10D8D84EF88DB.png)
+            DomResultItem domItem => new DomResultItem("Root", GetSampleContent("team_players"));
+            [Test]
+            public async Task ExtractsSampleData()
+            {
+                var actual = await KzsParser.GetPlayersAsync(domItem, default);
+
+                Assert.That(actual.Length, Is.EqualTo(11));
             }
         }
     }
