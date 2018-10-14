@@ -183,6 +183,34 @@ namespace KzsRest.Engine.Services.Implementation
 
             return new Player[0];
         }
+        internal static Player GetPlayer(HtmlNode domItem)
+        {
+            var cellNodes = domItem.SelectNodes("td");
+            int? number = null;
+            if (int.TryParse(cellNodes[0].InnerText, out var tempNumber))
+            {
+                number = tempNumber;
+            }
+            var nameNode = cellNodes[1].SelectSingleNode("a");
+            string name = nameNode.InnerText;
+            int playerId = int.Parse(nameNode.GetAttributeValue("player_id", null));
+            int? birthYear = null;
+            if (int.TryParse(cellNodes[2].InnerText, out var tempBirthYear))
+            {
+                birthYear = tempBirthYear;
+            }
+            var nationalityNode = cellNodes[3].SelectSingleNode("img");
+            string nationality = nationalityNode.GetAttributeValue("title", null);
+            string nationalityCode = nationalityNode.GetAttributeValue("alt", null);
+            string position = cellNodes[4].InnerText;
+            int? height = null;
+            if (int.TryParse(cellNodes[5].InnerText, out var tempHeight))
+            {
+                height = tempHeight;
+            }
+            return new Player();
+        }
+
         public async ValueTask<Standings[]> GetStandingsAsync(string address, CancellationToken ct)
         {
             var dom = await domRetriever.GetDomForAsync(address, ct);
