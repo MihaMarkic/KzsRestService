@@ -1,5 +1,7 @@
 ﻿using Flurl;
+using KzsRest.Engine.MetricsExtensions;
 using KzsRest.Engine.Services.Abstract;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Buffers;
@@ -22,16 +24,19 @@ namespace KzsRest.Engine.Services.Implementation
         readonly IConvert convert;
         readonly ISystem system;
         readonly ILogger<KzsParser> logger;
-        public DomRetriever(IConvert convert, ISystem system, ILogger<KzsParser> logger)
+        readonly IHttpContextAccessor httpContextAccessor;
+        public DomRetriever(IConvert convert, ISystem system, ILogger<KzsParser> logger, IHttpContextAccessor httpContextAccessor)
         {
             this.convert = convert;
             this.system = system;
             this.logger = logger;
+            this.httpContextAccessor = httpContextAccessor;
         }
         public Task<DomResultItem[]> GetDomForAsync(string relativeAddress, CancellationToken ct, params string[] args)
         {
             return Task.Run(() =>
             {
+                AppMetrics.DomRequestsTotal.Labels(httpContextAccessor.HttpContext.Request.Path).Inc();
                 var exeRoot = Path.GetDirectoryName(typeof(DomRetriever).Assembly.Location);
                 var psi = new ProcessStartInfo(Path.Combine(exeRoot, "phantomjs.exe"))
                 {
@@ -55,7 +60,10 @@ namespace KzsRest.Engine.Services.Implementation
                 process.ErrorDataReceived += (s, e) => Debug.WriteLine(e.Data);
                 try
                 {
-                    process.Start();
+                    using (var stopWatch = new HistogramStopwatch(AppMetrics.DomRequestsDuration.Labels(httpContextAccessor.HttpContext.Request.Path)))
+                    {
+                        process.Start();
+                    }
                 }
                 catch (Exception ex)
                 {

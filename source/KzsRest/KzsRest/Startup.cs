@@ -1,5 +1,7 @@
-﻿using KzsRest.Engine.Services.Abstract;
+﻿using KzsRest.Engine.MetricsExtensions;
+using KzsRest.Engine.Services.Abstract;
 using KzsRest.Engine.Services.Implementation;
+using KzsRest.Filters;
 using KzsRest.Services.Abstract;
 using KzsRest.Services.Implementation;
 using Microsoft.AspNetCore.Builder;
@@ -7,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Prometheus;
 
 namespace KzsRest
 {
@@ -22,7 +25,10 @@ namespace KzsRest
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMvc(setup =>
+            {
+                setup.Filters.Add(new ExceptionFilter());
+            }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddMemoryCache();
             services.AddSingleton<IKzsParser, KzsParser>();
             services.AddSingleton<IDomRetriever, DomRetriever>();
@@ -38,6 +44,8 @@ namespace KzsRest
             {
                 app.UseDeveloperExceptionPage();
             }
+            app.UseMetricServer();
+            app.UseMiddleware<RequestMetricsMiddleware>();
 
             app.UseMvc();
         }

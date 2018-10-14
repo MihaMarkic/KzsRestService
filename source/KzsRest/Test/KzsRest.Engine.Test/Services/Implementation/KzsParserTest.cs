@@ -20,14 +20,12 @@ namespace KzsRest.Engine.Test.Services.Implementation
         public class GetStandingsAsync: KzsParserTest
         {
             [Test]
-            public async Task WhenNoData_ReturnsEmptyArray()
+            public void WhenNoData_ThrowsException()
             {
                 var domRetriever = fixture.Freeze<IDomRetriever>();
                 domRetriever.GetDomForAsync(default, default).ReturnsForAnyArgs(new DomResultItem[0]);
 
-                var actual = await Target.GetStandingsAsync(default, default);
-
-                Assert.That(actual.Length, Is.EqualTo(0));
+                Assert.ThrowsAsync<Exception>(async () => await Target.GetStandingsAsync(default, default));
             }
             [Test]
             public async Task WhenSixGroups_ReturnsAllSix()
