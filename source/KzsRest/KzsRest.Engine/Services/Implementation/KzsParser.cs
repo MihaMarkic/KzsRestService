@@ -91,6 +91,31 @@ namespace KzsRest.Engine.Services.Implementation
             int opponentScore = int.Parse(scoreParts[1]);
             return new GameResult(gameId, gameDate, !isTransfer, homeScore, opponentScore, opponentTeamId, opponentTeamNode.InnerText);
         }
+        internal static Task<ShortGameFixture[]> GetShortGameFixturesAsync(DomResultItem domItem, CancellationToken ct)
+        {
+            return Task.Run(() =>
+            {
+                var html = new HtmlDocument();
+                html.LoadHtml(domItem.Content);
+                var rows = html.DocumentNode.SelectNodes("//table[@id='mbt-v2-team-home-schedule-table']/tbody/tr");
+                var result = rows.Select(r => GetShortGameFixture(r)).ToArray();
+                return result;
+            });
+        }
+        internal static ShortGameFixture GetShortGameFixture(HtmlNode root)
+        {
+            var dateNode = root.Element("td").Element("a");
+            int gameId = int.Parse(dateNode.GetAttributeValue("game_id", null));
+            string dateText = dateNode.FirstChild.InnerText;
+            string timeText = dateNode.Element("span").InnerText;
+            DateTimeOffset gameDate = DateTimeOffset.Parse($"{dateText} {timeText}", SloveneCulture);
+            var opponentNode = root.SelectSingleNode("td[2]");
+            bool isTransfer = string.Equals(opponentNode.Element("span").InnerText, "pri");
+            var opponentTeamNode = opponentNode.Element("a");
+            var opponentTeamId = int.Parse(opponentTeamNode.GetAttributeValue("team_id", null));
+            return new ShortGameFixture(gameId, gameDate, !isTransfer, opponentTeamId, 
+                                           opponentTeamNode.InnerText);
+        }
         internal static Task<Team> GetTeamDataAsync(DomResultItem domItem, CancellationToken ct)
         {
             return Task.Run(() =>

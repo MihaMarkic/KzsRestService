@@ -236,5 +236,38 @@ namespace KzsRest.Engine.Test.Services.Implementation
                 Assert.That(actual.OpponentName, Is.EqualTo("Stražišče Kranj"));
             }
         }
+        [TestFixture]
+        public class GetShortGameFixturesAsync : KzsParserTest
+        {
+            // ![](F937C186BDD85A7BE8D7A8EC74B98D7C.png)
+            DomResultItem domItem => new DomResultItem("Root", GetSampleContent("team_root"));
+            [Test]
+            public async Task ExtractsSampleData()
+            {
+                var actual = await KzsParser.GetShortGameFixturesAsync(domItem, default);
+
+                Assert.That(actual.Length, Is.EqualTo(3));
+            }
+        }
+        [TestFixture]
+        public class GetShortGameFixture : KzsParserTest
+        {
+            DomResultItem domItem => new DomResultItem("Root", GetSampleContent("team_root"));
+            [Test]
+            public void ExtractsSampleData()
+            {
+                var html = new HtmlDocument();
+                html.LoadHtml(domItem.Content);
+                var root = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-team-home-schedule-table']/tbody/tr[1]");
+
+                var actual = KzsParser.GetShortGameFixture(root);
+
+                Assert.That(actual.Date, Is.EqualTo(DateTimeOffset.Parse("20.10.2018 12:00", KzsParser.SloveneCulture)));
+                Assert.That(actual.GameId, Is.EqualTo(4240439));
+                Assert.That(actual.IsHomeGame, Is.True);
+                Assert.That(actual.OpponentId, Is.EqualTo(195973));
+                Assert.That(actual.OpponentName, Is.EqualTo("Grosuplje A"));
+            }
+        }
     }
 }
