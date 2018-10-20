@@ -21,7 +21,7 @@ namespace KzsRest.Controllers
             this.cacheService = cacheService;
         }
         [HttpGet("{competition:regex(^u\\d{{1,2}}$)}/{gender}/{division}")]
-        public async Task<ActionResult<Standings[]>> Get(string competition, Gender gender, DivisionType division)
+        public async Task<ActionResult<LeagueOverview>> Get(string competition, Gender gender, DivisionType division)
         {
             if (!int.TryParse(competition.TrimStart('u', 'U'), out int uRating))
             {
@@ -38,10 +38,10 @@ namespace KzsRest.Controllers
             {
                 return NotFound();
             }
-            var result = await cacheService.GetDataAsync<string, Standings[]>(
+            var result = await cacheService.GetDataAsync<string, LeagueOverview>(
                 current.Url,
                 TimeSpan.FromMinutes(15),
-                (k, ct) => kzsParser.GetStandingsAsync(k, ct), 
+                (k, ct) => kzsParser.GetLeagueOverviewAsync(k, ct), 
                 CancellationToken.None);
             return result;
         }

@@ -82,6 +82,17 @@ page.onLoadFinished = function() {
 // page.onNavigationRequested = function(url, type, willNavigate, main) {
 //     //console.log('Trying to navigate to: ' + url);
 // };
+
+// var test = {
+// 	url: 'http://www.kzs.si/incl?id=967&team_id=195883&league_id=undefined&season_id=102583',
+// 	items: [
+// 		{
+// 			click: null,
+// 			nodes: ['33-200-qualizer-1', '']
+// 		}
+// 	]
+// };
+
 page.open(system.args[1]);
 
 function Base64Encode(str) {

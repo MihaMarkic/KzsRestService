@@ -15,9 +15,11 @@ namespace KzsRest.Engine.Test.Services.Implementation
     {
         internal const string U17_Male_A = "u17_male_a";
         internal const string SampleStandingsTable = "sample_standings_table";
+        internal const string LeagueFixtures = "league_fixtures";
+        internal const string LeagueResults = "league_results";
         internal static string GetSampleContent(string file) => File.ReadAllText(Path.Combine("Samples", $"{file}.html"));
         [TestFixture]
-        public class GetStandingsAsync: KzsParserTest
+        public class GetLeagueOverviewAsync : BaseTest<KzsParser>
         {
             [Test]
             public void WhenNoData_ThrowsException()
@@ -25,18 +27,29 @@ namespace KzsRest.Engine.Test.Services.Implementation
                 var domRetriever = fixture.Freeze<IDomRetriever>();
                 domRetriever.GetDomForAsync(default, default).ReturnsForAnyArgs(new DomResultItem[0]);
 
-                Assert.ThrowsAsync<Exception>(async () => await Target.GetStandingsAsync(default, default));
+                Assert.ThrowsAsync<Exception>(async () => await Target.GetLeagueOverviewAsync(default, default));
+            }
+        }
+        [TestFixture]
+        public class GetStandingsAsync: KzsParserTest
+        {
+            [Test]
+            public void WhenNoData_ThrowsException()
+            {
+                Assert.ThrowsAsync<Exception>(async () => await KzsParser.GetStandingsAsync(new HtmlDocument(), default));
             }
             [Test]
             public async Task WhenSixGroups_ReturnsAllSix()
             {
-                var domRetriever = fixture.Freeze<IDomRetriever>();
-                domRetriever.GetDomForAsync(default, default, default).ReturnsForAnyArgs(
-                    new DomResultItem[] {
-                        new DomResultItem(id: "Root", GetSampleContent(U17_Male_A))
-                    });
+                //var domRetriever = fixture.Freeze<IDomRetriever>();
+                //domRetriever.GetDomForAsync(default, default, default).ReturnsForAnyArgs(
+                //    new DomResultItem[] {
+                //        new DomResultItem(id: "Root", GetSampleContent(U17_Male_A))
+                //    });
+                var html = new HtmlDocument();
+                html.LoadHtml(GetSampleContent(U17_Male_A));
 
-                var actual = await Target.GetStandingsAsync(default, default);
+                var actual = await KzsParser.GetStandingsAsync(html, default);
 
                 Assert.That(actual.Length, Is.EqualTo(6));
             }
@@ -109,6 +122,70 @@ namespace KzsRest.Engine.Test.Services.Implementation
                 Assert.That(actual.AwayGameSeries, Is.EqualTo(1));
                 Assert.That(actual.FivePointsWins, Is.EqualTo(0));
                 Assert.That(actual.FivePointsDefeats, Is.EqualTo(0));
+            }
+        }
+        [TestFixture]
+        public class ExtractGameFixture : KzsParserTest
+        {
+            // ![](5ED4E42C5E64CC83B5B675018DF495D0.png)
+            protected HtmlNode fixturesTable;
+            protected HtmlNode resultsTable;
+            [SetUp]
+            public new void SetUp()
+            {
+                var html = new HtmlDocument();
+                html.LoadHtml(GetSampleContent(LeagueFixtures));
+                fixturesTable = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-schedule-table']");
+                html = new HtmlDocument();
+                html.LoadHtml(GetSampleContent(LeagueResults));
+                resultsTable = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-schedule-table']");
+            }
+            [Test]
+            public void GivenSampleDataFromFirstRow_ParsesFixturesCorrectly()
+            {
+                var tr = fixturesTable.SelectSingleNode("tbody/tr[1]");
+
+                var actual = KzsParser.ExtractGameFixtureOrResult(tr, includeResults: false);
+
+                Assert.That(actual.PlayDay, Is.EqualTo(5));
+                Assert.That(actual.GameId, Is.EqualTo(4240363));
+                Assert.That(actual.Date, Is.EqualTo(DateTimeOffset.Parse("20.10.2018 10:00", KzsParser.SloveneCulture)));
+                Assert.That(actual.HomeTeam.TeamId, Is.EqualTo(196363));
+                Assert.That(actual.HomeTeam.Name, Is.EqualTo("Calcit Basketball"));
+                Assert.That(actual.HomeTeam.LeagueId, Is.Null);
+                Assert.That(actual.HomeTeam.SeasonId, Is.EqualTo(102583));
+                Assert.That(actual.HomeTeam.Score, Is.Null);
+                Assert.That(actual.AwayTeam.TeamId, Is.EqualTo(195883));
+                Assert.That(actual.AwayTeam.Name, Is.EqualTo("Konjice - Zreče"));
+                Assert.That(actual.AwayTeam.LeagueId, Is.Null);
+                Assert.That(actual.AwayTeam.SeasonId, Is.EqualTo(102583));
+                Assert.That(actual.AwayTeam.Score, Is.Null);
+                Assert.That(actual.Arena.Id, Is.EqualTo(8553));
+                Assert.That(actual.Arena.Name, Is.EqualTo("ŠD Kamnik"));
+            }
+            // ![](023BE71E0BC5C7F6D4F4ADA38FDE6422.png)
+            [Test]
+            public void GivenSampleDataFromFirstRow_ParsesResultsCorrectly()
+            {
+                var tr = resultsTable.SelectSingleNode("tbody/tr[1]");
+
+                var actual = KzsParser.ExtractGameFixtureOrResult(tr, includeResults: true);
+
+                Assert.That(actual.PlayDay, Is.EqualTo(5));
+                Assert.That(actual.GameId, Is.EqualTo(4240341));
+                Assert.That(actual.Date, Is.EqualTo(DateTimeOffset.Parse("20.10.2018 12:45", KzsParser.SloveneCulture)));
+                Assert.That(actual.HomeTeam.TeamId, Is.EqualTo(195923));
+                Assert.That(actual.HomeTeam.Name, Is.EqualTo("Petrol Olimpija A"));
+                Assert.That(actual.HomeTeam.LeagueId, Is.Null);
+                Assert.That(actual.HomeTeam.SeasonId, Is.EqualTo(102583));
+                Assert.That(actual.HomeTeam.Score, Is.EqualTo(87));
+                Assert.That(actual.AwayTeam.TeamId, Is.EqualTo(196413));
+                Assert.That(actual.AwayTeam.Name, Is.EqualTo("Ljubljana A"));
+                Assert.That(actual.AwayTeam.LeagueId, Is.Null);
+                Assert.That(actual.AwayTeam.SeasonId, Is.EqualTo(102583));
+                Assert.That(actual.AwayTeam.Score, Is.EqualTo(91));
+                Assert.That(actual.Arena.Id, Is.EqualTo(7683));
+                Assert.That(actual.Arena.Name, Is.EqualTo("Stožice, mala dv."));
             }
         }
         [TestFixture]

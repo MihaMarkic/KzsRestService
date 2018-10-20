@@ -219,16 +219,118 @@ namespace KzsRest.Engine.Services.Implementation
             return new Player(playerId, number, fullName, nationalityCode, nationality, birthYear, position != "-" ? position: null, height);
         }
 
-        public async Task<Standings[]> GetStandingsAsync(string address, CancellationToken ct)
+        public async Task<LeagueOverview> GetLeagueOverviewAsync(string address, CancellationToken ct)
         {
-            var dom = await domRetriever.GetDomForAsync(address, ct);
+            var dom = await domRetriever.GetDomForAsync(address, ct, "33-303-tab-2");
             if (dom.Length > 0)
             {
-                var html = new HtmlDocument();
-                html.LoadHtml(dom[0].Content);
+                var leagueOverviewTask = ExtractStandingsAndFixturesAsync(dom[0], ct);
+                var resultsTask = ExtractLeagueGameResultsAsync(dom[1], ct);
+                var leagueOverview = await leagueOverviewTask;
+                return leagueOverview.Clone(results: await resultsTask);
+            }
+            else
+            {
+                throw new Exception("No DOM retrieved");
+            }
+        }
 
+        internal static Task<GameFixture[]> ExtractLeagueGameResultsAsync(DomResultItem item, CancellationToken ct)
+        {
+            return Task.Run(async () =>
+            {
+                var html = new HtmlDocument();
+                html.LoadHtml(item.Content);
+
+                var resultsTable = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-schedule-table']");
+                var result = await ExtractFixturesOrResultsAsync(resultsTable, includeResults: true, ct);
+                return result;
+            });
+        }
+
+        internal static Task<LeagueOverview> ExtractStandingsAndFixturesAsync(DomResultItem item, CancellationToken ct)
+        {
+            return Task.Run(async () =>
+            {
+                var html = new HtmlDocument();
+                html.LoadHtml(item.Content);
+
+                var standingsTask = GetStandingsAsync(html, ct);
+                var fixturesTable = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-schedule-table']");
+                var fixturesTask = ExtractFixturesOrResultsAsync(fixturesTable, includeResults: false, ct);
+                return new LeagueOverview(
+                        standings: await standingsTask,
+                        fixtures: await fixturesTask,
+                        results: null
+                    );
+            });
+        }
+
+        internal static Task<GameFixture[]> ExtractFixturesOrResultsAsync(HtmlNode table, bool includeResults, CancellationToken ct)
+        {
+            return Task.Run(() =>
+            {
+                var rows = table.SelectNodes("tbody/tr");
+                return rows.Select(r => ExtractGameFixtureOrResult(r, includeResults)).ToArray();
+            });
+        }
+
+        internal static GameFixture ExtractGameFixtureOrResult(HtmlNode tr, bool includeResults)
+        {
+            var cells = tr.SelectNodes("td");
+            var dateA = cells[1].SelectSingleNode("a");
+            var homeA = cells[2].SelectSingleNode("a") ?? cells[2].SelectSingleNode("span/a");
+            var awayA = cells[4].SelectSingleNode("a") ?? cells[4].SelectSingleNode("span/a");
+            var arenaA = cells[5].SelectSingleNode("a");
+            int? homeScore = null;
+            int? awayScore = null;
+            if (includeResults)
+            {
+                (homeScore, awayScore) = ExtractPairAsInt(cells[3].SelectSingleNode("a"), split: ':');
+            }
+            return new GameFixture(
+                playDay: ExtractInt(cells[0].InnerText).Value,
+                gameId: ExtractInt(dateA.GetAttributeValue("game_id", null)).Value,
+                date: DateTimeOffset.Parse(dateA.InnerText, SloveneCulture),
+                homeTeam: ExtractTeamFixture(homeA, homeScore),
+                awayTeam: ExtractTeamFixture(awayA, awayScore),
+                arena: ExtractArena(arenaA)
+            );
+        }
+
+        internal static Arena ExtractArena(HtmlNode a)
+        {
+            return new Arena(
+                id: ExtractInt(a.GetAttributeValue("arena_id", null)).Value,
+                name: a.InnerText,
+                url: null
+            );
+        }
+
+        internal static TeamFixture ExtractTeamFixture(HtmlNode a, int? score)
+        {
+            return new TeamFixture(
+                ExtractInt(a.GetAttributeValue("team_id", null)).Value,
+                a.InnerText,
+                leagueId: ExtractInt(a.GetAttributeValue("league_id", null)),
+                seasonId: ExtractInt(a.GetAttributeValue("season_id", null)).Value,
+                score);
+        }
+
+        internal static Task<Standings[]> GetStandingsAsync(HtmlDocument html, CancellationToken ct)
+        {
+            return Task.Run(() =>
+            {
                 var standingsContainer = html.DocumentNode.SelectSingleNode("//div[@id='33-301-standings-container']");
+                if (standingsContainer == null)
+                {
+                    throw new Exception("Couldn't find standings container");
+                }
                 var titles = standingsContainer.SelectNodes("//div[@class='mbt-v2-table-header-before-table']");
+                if (titles == null)
+                {
+                    throw new Exception("Couldn't find titles");
+                }
                 if (titles?.Count > 0)
                 {
                     var standings = new Standings[titles.Count];
@@ -246,12 +348,9 @@ namespace KzsRest.Engine.Services.Implementation
                 {
                     return new Standings[0];
                 }
-            }
-            else
-            {
-                throw new Exception("No DOM retrieved");
-            }
+            });
         }
+
         internal static Standings ExtractStanding(HtmlNode node)
         {
             var tableDiv = GetNextElementSibling(node);
@@ -322,9 +421,17 @@ namespace KzsRest.Engine.Services.Implementation
             }
             return null;
         }
-        internal static (int? Left, int? Right) ExtractPairAsInt(HtmlNode node)
+        internal static int? ExtractInt(string text)
         {
-            var parts = node.InnerText.Split('/');
+            if (int.TryParse(text, out int value))
+            {
+                return value;
+            }
+            return null;
+        }
+        internal static (int? Left, int? Right) ExtractPairAsInt(HtmlNode node, char split = '/')
+        {
+            var parts = node.InnerText.Split(split);
             (int? Left, int? Right) result = default;
             if (int.TryParse(parts[0], out int left))
             {
