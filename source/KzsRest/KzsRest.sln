@@ -11,7 +11,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{AF792C38-8
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KzsRest.Engine.Test", "Test\KzsRest.Engine.Test\KzsRest.Engine.Test.csproj", "{7A81F550-DE0B-4447-AC18-6B863B3D5914}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KzsRest.Models", "KzsRest.Models\KzsRest.Models.csproj", "{70DD0726-F12E-48B3-A4A7-0BF08BD841E7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KzsRest.Models", "KzsRest.Models\KzsRest.Models.csproj", "{70DD0726-F12E-48B3-A4A7-0BF08BD841E7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{C12A4649-DBA5-4F41-AE5B-DA1C1D883916}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\.gitignore = ..\..\.gitignore
+		Dockerfile = Dockerfile
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

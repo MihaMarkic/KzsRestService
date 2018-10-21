@@ -38,7 +38,12 @@ namespace KzsRest.Engine.Services.Implementation
             {
                 AppMetrics.DomRequestsTotal.Labels(httpContextAccessor.HttpContext.Request.Path).Inc();
                 var exeRoot = Path.GetDirectoryName(typeof(DomRetriever).Assembly.Location);
-                var psi = new ProcessStartInfo(Path.Combine(exeRoot, "phantomjs.exe"))
+#if DEBUG
+                string exeName = "phantomjs.exe";
+#else
+                string exeName = "phantomjs";
+#endif
+                var psi = new ProcessStartInfo(Path.Combine(exeRoot, exeName))
                 {
                     UseShellExecute = false,
                     WorkingDirectory = exeRoot,
@@ -49,6 +54,8 @@ namespace KzsRest.Engine.Services.Implementation
                 string address = Url.Combine(Root, relativeAddress);
                 string jsRoot = Path.Combine(system.ContentRootPath, "Content", "js");
                 psi.Arguments = $"--debug=false --cookies-file=\"{Path.Combine(exeRoot, "cookies.dat")}\"--disk-cache=true --disk-cache-path=\"{Path.Combine(exeRoot, "cache")}\" --load-images=false \"{Path.Combine(jsRoot, "load_and_click.js")}\" \"{address}\" {string.Join(" ", args)}";
+                logger.LogInformation($"Phantom is: {psi.FileName}");
+                logger.LogInformation($"Phantom arguments: {psi.Arguments}");
                 //logger.LogInformation(psi.Arguments);
                 var process = new Process()
                 {

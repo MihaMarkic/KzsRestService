@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Prometheus;
+using System;
 
 namespace KzsRest
 {
@@ -40,10 +41,11 @@ namespace KzsRest
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            if (env.IsDevelopment())
+            if (env.IsDevelopment() || true)
             {
                 app.UseDeveloperExceptionPage();
             }
+            Console.WriteLine($"Environment is {env.EnvironmentName}");
             app.UseMetricServer();
             app.UseMiddleware<RequestMetricsMiddleware>();
 

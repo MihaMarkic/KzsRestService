@@ -1,0 +1,63 @@
+{
+  "runtimeTarget": {
+    "name": ".NETStandard,Version=v2.0/",
+    "signature": "20a70d18f3287b41efaea8aad46fba4dcd25dfef"
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETStandard,Version=v2.0": {},
+    ".NETStandard,Version=v2.0/": {
+      "KzsRest.Models/1.0.0": {
+        "dependencies": {
+          "NETStandard.Library": "2.0.3",
+          "Righthand.Immutable": "1.0.2"
+        },
+        "runtime": {
+          "KzsRest.Models.dll": {}
+        }
+      },
+      "Microsoft.NETCore.Platforms/1.1.0": {},
+      "NETStandard.Library/2.0.3": {
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "1.1.0"
+        }
+      },
+      "Righthand.Immutable/1.0.2": {
+        "runtime": {
+          "lib/netstandard2.0/Righthand.Immutable.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "KzsRest.Models/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.NETCore.Platforms/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-/D93UPsB9KxKAhoS/JRAH7PSlWi1LQwC7axtrlxWM2Y+8/jMda8nv29xLempGE2FVsXwYH2ZY+FZXs6xcGpMog==",
+      "path": "microsoft.netcore.platforms/1.1.0",
+      "hashPath": "microsoft.netcore.platforms.1.1.0.nupkg.sha512"
+    },
+    "NETStandard.Library/2.0.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-st47PosZSHrjECdjeIzZQbzivYBJFv6P2nv4cj2ypdI204DO+vZ7l5raGMiX4eXMJ53RfOIg+/s4DHVZ54Nu2A==",
+      "path": "netstandard.library/2.0.3",
+      "hashPath": "netstandard.library.2.0.3.nupkg.sha512"
+    },
+    "Righthand.Immutable/1.0.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-PWIo+FfDl4KyTdxky/z5mc9HOxoCEK1pkrRLa7XRI+4ybjFQBmXIdq6Q+IAG8DIR1QCgtLd19oZGVH9G4DNDOQ==",
+      "path": "righthand.immutable/1.0.2",
+      "hashPath": "righthand.immutable.1.0.2.nupkg.sha512"
+    }
+  }
+}
