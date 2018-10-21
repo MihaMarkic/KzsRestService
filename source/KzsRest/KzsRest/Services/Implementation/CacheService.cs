@@ -2,6 +2,7 @@
 using KzsRest.Services.Abstract;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
+using Polly;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,7 +22,10 @@ namespace KzsRest.Services.Implementation
         {
             if (!cache.TryGetValue<TResult>(key, out var result))
             {
-                result = await creator(key, ct);
+                var policy = Policy
+                    .Handle<Exception>()
+                    .RetryAsync(3);
+                result = await policy.ExecuteAsync(cti => creator(key, cti), ct);
                 cache.Set(key, result, span);
             }
             else

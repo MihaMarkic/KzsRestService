@@ -36,10 +36,10 @@ namespace KzsRest.Engine.Test.Services.Implementation
             [Test]
             public void WhenNoData_ThrowsException()
             {
-                Assert.ThrowsAsync<Exception>(async () => await KzsParser.GetStandingsAsync(new HtmlDocument(), default));
+                Assert.Throws<Exception>(() => KzsParser.GetStandings(new HtmlDocument(), default));
             }
             [Test]
-            public async Task WhenSixGroups_ReturnsAllSix()
+            public void WhenSixGroups_ReturnsAllSix()
             {
                 //var domRetriever = fixture.Freeze<IDomRetriever>();
                 //domRetriever.GetDomForAsync(default, default, default).ReturnsForAnyArgs(
@@ -49,7 +49,7 @@ namespace KzsRest.Engine.Test.Services.Implementation
                 var html = new HtmlDocument();
                 html.LoadHtml(GetSampleContent(U17_Male_A));
 
-                var actual = await KzsParser.GetStandingsAsync(html, default);
+                var actual = KzsParser.GetStandings(html, default);
 
                 Assert.That(actual.Length, Is.EqualTo(6));
             }

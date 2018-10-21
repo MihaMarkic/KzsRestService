@@ -35,8 +35,7 @@ namespace KzsRest.Engine.Services.Implementation
             var playersPage = dom.Cast<DomResultItem?>().SingleOrDefault(d => string.Equals(d.Value.Id, playersTab, StringComparison.Ordinal));
             if (!rootPage.HasValue)
             {
-                logger.LogWarning("Couldn't get root tab");
-                return null;
+                throw new Exception("Couldn't get root tab");
             }
             var teamTask = GetTeamDataAsync(rootPage.Value, ct);
             var lastResultsTask = GetLastTeamResultsAsync(rootPage.Value, ct);
@@ -237,42 +236,39 @@ namespace KzsRest.Engine.Services.Implementation
 
         internal static Task<GameFixture[]> ExtractLeagueGameResultsAsync(DomResultItem item, CancellationToken ct)
         {
-            return Task.Run(async () =>
+            return Task.Run(() =>
             {
                 var html = new HtmlDocument();
                 html.LoadHtml(item.Content);
 
                 var resultsTable = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-schedule-table']");
-                var result = await ExtractFixturesOrResultsAsync(resultsTable, includeResults: true, ct);
+                var result = ExtractFixturesOrResults(resultsTable, includeResults: true, ct);
                 return result;
             });
         }
 
         internal static Task<LeagueOverview> ExtractStandingsAndFixturesAsync(DomResultItem item, CancellationToken ct)
         {
-            return Task.Run(async () =>
+            return Task.Run(() =>
             {
                 var html = new HtmlDocument();
                 html.LoadHtml(item.Content);
 
-                var standingsTask = GetStandingsAsync(html, ct);
+                var standings = GetStandings(html, ct);
                 var fixturesTable = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-schedule-table']");
-                var fixturesTask = ExtractFixturesOrResultsAsync(fixturesTable, includeResults: false, ct);
+                var fixtures = ExtractFixturesOrResults(fixturesTable, includeResults: false, ct);
                 return new LeagueOverview(
-                        standings: await standingsTask,
-                        fixtures: await fixturesTask,
+                        standings: standings,
+                        fixtures: fixtures,
                         results: null
                     );
             });
         }
 
-        internal static Task<GameFixture[]> ExtractFixturesOrResultsAsync(HtmlNode table, bool includeResults, CancellationToken ct)
+        internal static GameFixture[] ExtractFixturesOrResults(HtmlNode table, bool includeResults, CancellationToken ct)
         {
-            return Task.Run(() =>
-            {
-                var rows = table.SelectNodes("tbody/tr");
-                return rows.Select(r => ExtractGameFixtureOrResult(r, includeResults)).ToArray();
-            });
+            var rows = table.SelectNodes("tbody/tr");
+            return rows.Select(r => ExtractGameFixtureOrResult(r, includeResults)).ToArray();
         }
 
         internal static GameFixture ExtractGameFixtureOrResult(HtmlNode tr, bool includeResults)
@@ -317,38 +313,35 @@ namespace KzsRest.Engine.Services.Implementation
                 score);
         }
 
-        internal static Task<Standings[]> GetStandingsAsync(HtmlDocument html, CancellationToken ct)
+        internal static Standings[] GetStandings(HtmlDocument html, CancellationToken ct)
         {
-            return Task.Run(() =>
+            var standingsContainer = html.DocumentNode.SelectSingleNode("//div[@id='33-301-standings-container']");
+            if (standingsContainer == null)
             {
-                var standingsContainer = html.DocumentNode.SelectSingleNode("//div[@id='33-301-standings-container']");
-                if (standingsContainer == null)
+                throw new Exception("Couldn't find standings container");
+            }
+            var titles = standingsContainer.SelectNodes("//div[@class='mbt-v2-table-header-before-table']");
+            if (titles == null)
+            {
+                throw new Exception("Couldn't find titles");
+            }
+            if (titles?.Count > 0)
+            {
+                var standings = new Standings[titles.Count];
+                for (int i = 0; i < titles.Count; i++)
                 {
-                    throw new Exception("Couldn't find standings container");
-                }
-                var titles = standingsContainer.SelectNodes("//div[@class='mbt-v2-table-header-before-table']");
-                if (titles == null)
-                {
-                    throw new Exception("Couldn't find titles");
-                }
-                if (titles?.Count > 0)
-                {
-                    var standings = new Standings[titles.Count];
-                    for (int i = 0; i < titles.Count; i++)
+                    var standing = ExtractStanding(titles[i]);
+                    if (standing != null)
                     {
-                        var standing = ExtractStanding(titles[i]);
-                        if (standing != null)
-                        {
-                            standings[i] = standing;
-                        }
+                        standings[i] = standing;
                     }
-                    return standings;
                 }
-                else
-                {
-                    return new Standings[0];
-                }
-            });
+                return standings;
+            }
+            else
+            {
+                return new Standings[0];
+            }
         }
 
         internal static Standings ExtractStanding(HtmlNode node)
@@ -356,12 +349,12 @@ namespace KzsRest.Engine.Services.Implementation
             var tableDiv = GetNextElementSibling(node);
             if (tableDiv == null)
             {
-                return null;
+                throw new Exception("Couldn't find table div");
             }
             var table = tableDiv.SelectSingleNode("table");
             if (table?.Name != "table")
             {
-                return null;
+                throw new Exception("Couldn't find table element");
             }
             var rows = table.SelectNodes("tbody/tr");
             return new Standings(node.InnerText, rows.Select(r => ExtractStandingsEntry(r)).ToArray());
