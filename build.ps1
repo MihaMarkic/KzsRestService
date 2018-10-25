@@ -51,7 +51,8 @@ Param(
     [string[]]$ScriptArgs,
 	[string]$BuildVersion,
 	[switch]$Pull,
-	[switch]$Push
+	[switch]$Push,
+	[string]$Dokreg
 )
 
 # Attempt to set highest encryption available for SecurityProtocol.
@@ -239,8 +240,9 @@ if ($Verbosity) { $cakeArguments += "-verbosity=$Verbosity" }
 if ($ShowDescription) { $cakeArguments += "-showdescription" }
 if ($DryRun) { $cakeArguments += "-dryrun" }
 if ($BuildVersion) { $cakeArguments += "-buildVersion=$BuildVersion" }
-#if ($Pull) { $cakeArguments += "-pull=$Pull" }
-#if ($Push) { $cakeArguments += "-push=$Push" }
+if ($Pull) { $cakeArguments += "-pull=$Pull" }
+if ($Push) { $cakeArguments += "-push=$Push" }
+if ($Dokreg) { $cakeArguments += "-push=$Dokreg" }
 $cakeArguments += $ScriptArgs
 
 # Start Cake
