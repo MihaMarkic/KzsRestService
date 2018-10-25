@@ -16,6 +16,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{C12A4649-DBA5-4F41-AE5B-DA1C1D883916}"
 	ProjectSection(SolutionItems) = preProject
 		..\..\.gitignore = ..\..\.gitignore
+		..\..\appbuild.cake = ..\..\appbuild.cake
+		..\..\build.ps1 = ..\..\build.ps1
 		Dockerfile = Dockerfile
 	EndProjectSection
 EndProject
