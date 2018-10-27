@@ -27,16 +27,25 @@ namespace KzsRest.Engine.Test.Services.Implementation
                 var domRetriever = fixture.Freeze<IDomRetriever>();
                 domRetriever.GetDomForAsync(default, default).ReturnsForAnyArgs(new DomResultItem[0]);
 
-                Assert.ThrowsAsync<Exception>(async () => await Target.GetLeagueOverviewAsync(default, default));
+                Assert.ThrowsAsync<Exception>(async () => await Target.GetLeagueOverviewAsync(default, areStandingRequired: true, default));
             }
         }
         [TestFixture]
         public class GetStandingsAsync: KzsParserTest
         {
             [Test]
-            public void WhenNoData_ThrowsException()
+            public void WhenNoDataAndStandingsRequired_ThrowsException()
             {
-                Assert.Throws<Exception>(() => KzsParser.GetStandings(new HtmlDocument(), default));
+                Assert.Throws<Exception>(() => KzsParser.GetStandings(new HtmlDocument(), areStandingRequired: true, default));
+            }
+            [Test]
+            public void WhenNoDataAndStandingsNotRequired_ReturnsEmptyArray()
+            {
+                var doc = new HtmlDocument();
+                doc.Load(new StringReader("<div id='33-301-standings-container'></div>"));
+                var actual = KzsParser.GetStandings(doc, areStandingRequired: false, default);
+
+                Assert.That(actual.Length, Is.Zero);
             }
             [Test]
             public void WhenSixGroups_ReturnsAllSix()
@@ -49,7 +58,7 @@ namespace KzsRest.Engine.Test.Services.Implementation
                 var html = new HtmlDocument();
                 html.LoadHtml(GetSampleContent(U17_Male_A));
 
-                var actual = KzsParser.GetStandings(html, default);
+                var actual = KzsParser.GetStandings(html, areStandingRequired:true, default);
 
                 Assert.That(actual.Length, Is.EqualTo(6));
             }

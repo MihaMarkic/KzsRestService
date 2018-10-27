@@ -41,12 +41,12 @@ namespace KzsRest.Controllers
             var result = await cacheService.GetDataAsync(
                 current.Url,
                 TimeSpan.FromMinutes(15),
-                (k, ct) => kzsParser.GetLeagueOverviewAsync(k, ct), 
+                (k, ct) => kzsParser.GetLeagueOverviewAsync(k, areStandingRequired: true, ct), 
                 CancellationToken.None);
             return result;
         }
         [HttpGet("{gender}/{division:regex(^(1|2|3|4)$)}")]
-        public async Task<ActionResult<LeagueOverview>> Get(Gender gender, int division)
+        public async Task<ActionResult<LeagueOverview>> GetMajorLegue(Gender gender, int division)
         {
             var topLevel = await kzsParser.GetTopLevelAsync(CancellationToken.None);
 
@@ -61,7 +61,45 @@ namespace KzsRest.Controllers
             var result = await cacheService.GetDataAsync(
                 current.Url,
                 TimeSpan.FromMinutes(15),
-                (k, ct) => kzsParser.GetLeagueOverviewAsync(k, ct),
+                (k, ct) => kzsParser.GetLeagueOverviewAsync(k, areStandingRequired: true, ct),
+                CancellationToken.None);
+            return result;
+        }
+        [HttpGet("{gender}/pokal")]
+        public async Task<ActionResult<LeagueOverview>> GetMajorCup(Gender gender)
+        {
+            var topLevel = await kzsParser.GetTopLevelAsync(CancellationToken.None);
+            var query = from m in topLevel.MajorCupLeagues
+                        where m.Gender == gender
+                        select m;
+            var current = query.SingleOrDefault();
+            if (current == null)
+            {
+                return NotFound();
+            }
+            var result = await cacheService.GetDataAsync(
+                current.Url,
+                TimeSpan.FromMinutes(15),
+                (k, ct) => kzsParser.GetLeagueOverviewAsync(k, areStandingRequired: false, ct),
+                CancellationToken.None);
+            return result;
+        }
+        [HttpGet("{gender}/mini-pokal")]
+        public async Task<ActionResult<LeagueOverview>> GetMinorCup(Gender gender)
+        {
+            var topLevel = await kzsParser.GetTopLevelAsync(CancellationToken.None);
+            var query = from m in topLevel.MinorCupLeagues
+                        where m.Gender == gender
+                        select m;
+            var current = query.SingleOrDefault();
+            if (current == null)
+            {
+                return NotFound();
+            }
+            var result = await cacheService.GetDataAsync(
+                current.Url,
+                TimeSpan.FromMinutes(15),
+                (k, ct) => kzsParser.GetLeagueOverviewAsync(k, areStandingRequired: false, ct),
                 CancellationToken.None);
             return result;
         }

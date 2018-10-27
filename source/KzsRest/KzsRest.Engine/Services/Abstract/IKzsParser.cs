@@ -7,7 +7,7 @@ namespace KzsRest.Engine.Services.Abstract
 {
     public interface IKzsParser
     {
-        Task<LeagueOverview> GetLeagueOverviewAsync(string address, CancellationToken ct);
+        Task<LeagueOverview> GetLeagueOverviewAsync(string address, bool areStandingRequired, CancellationToken ct);
         ValueTask<KzsLeagues> GetTopLevelAsync(CancellationToken ct);
         Task<Team> GetTeamAsync(TeamKey key, CancellationToken ct);
     }

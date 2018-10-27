@@ -218,12 +218,12 @@ namespace KzsRest.Engine.Services.Implementation
             return new Player(playerId, number, fullName, nationalityCode, nationality, birthYear, position != "-" ? position: null, height);
         }
 
-        public async Task<LeagueOverview> GetLeagueOverviewAsync(string address, CancellationToken ct)
+        public async Task<LeagueOverview> GetLeagueOverviewAsync(string address, bool areStandingRequired, CancellationToken ct)
         {
             var dom = await domRetriever.GetDomForAsync(address, ct, "33-303-tab-2");
             if (dom.Length > 0)
             {
-                var leagueOverviewTask = ExtractStandingsAndFixturesAsync(dom[0], ct);
+                var leagueOverviewTask = ExtractStandingsAndFixturesAsync(dom[0], areStandingRequired, ct);
                 var resultsTask = ExtractLeagueGameResultsAsync(dom[1], ct);
                 var leagueOverview = await leagueOverviewTask;
                 return leagueOverview.Clone(results: await resultsTask);
@@ -247,14 +247,14 @@ namespace KzsRest.Engine.Services.Implementation
             });
         }
 
-        internal static Task<LeagueOverview> ExtractStandingsAndFixturesAsync(DomResultItem item, CancellationToken ct)
+        internal static Task<LeagueOverview> ExtractStandingsAndFixturesAsync(DomResultItem item, bool areStandingRequired, CancellationToken ct)
         {
             return Task.Run(() =>
             {
                 var html = new HtmlDocument();
                 html.LoadHtml(item.Content);
 
-                var standings = GetStandings(html, ct);
+                var standings = GetStandings(html, areStandingRequired, ct);
                 var fixturesTable = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-schedule-table']");
                 var fixtures = ExtractFixturesOrResults(fixturesTable, includeResults: false, ct);
                 return new LeagueOverview(
@@ -313,7 +313,7 @@ namespace KzsRest.Engine.Services.Implementation
                 score);
         }
 
-        internal static Standings[] GetStandings(HtmlDocument html, CancellationToken ct)
+        internal static Standings[] GetStandings(HtmlDocument html, bool areStandingRequired, CancellationToken ct)
         {
             var standingsContainer = html.DocumentNode.SelectSingleNode("//div[@id='33-301-standings-container']");
             if (standingsContainer == null)
@@ -323,7 +323,14 @@ namespace KzsRest.Engine.Services.Implementation
             var titles = standingsContainer.SelectNodes("//div[@class='mbt-v2-table-header-before-table']");
             if (titles == null)
             {
-                throw new Exception("Couldn't find titles");
+                if (areStandingRequired)
+                {
+                    throw new Exception("Couldn't find titles");
+                }
+                else
+                {
+                    return new Standings[0];
+                }
             }
             if (titles?.Count > 0)
             {

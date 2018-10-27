@@ -4,7 +4,7 @@ using Righthand.Immutable;
 
 namespace KzsRest.Models
 {
-    [DebuggerDisplay("{date.Date} {homeTeam.Name} {homeTeam.Score}:{awayTeam.Score} {awayTeam.Name}")]
+    [DebuggerDisplay("{Date.Date} {HomeTeam.Name} {HomeTeam.Score}:{AwayTeam.Score} {AwayTeam.Name}")]
     public class GameFixture
     {
         public int PlayDay { get; }
