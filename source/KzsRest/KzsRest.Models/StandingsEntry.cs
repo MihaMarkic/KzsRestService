@@ -14,8 +14,8 @@
         public int? PointsMade { get; }
         public int? PointsReceived { get; }
         public int PointsDifference { get; }
-        public decimal PointsMadePerGame { get; }
-        public decimal PointsReceivedPerGame { get; }
+        public decimal? PointsMadePerGame { get; }
+        public decimal? PointsReceivedPerGame { get; }
         public  int HomeWins { get; }
         public int HomeDefeats { get; }
         public int AwayWins { get; }
@@ -33,7 +33,7 @@
         public int? AwayGameSeries { get; }
         public int? FivePointsWins { get; }
         public int? FivePointsDefeats { get; }
-        public StandingsEntry(int teamId, int? season, int? league, int position, string teamName, int games, int won, int lost, int points, int? pointsMade, int? pointsReceived, int pointsDifference, decimal pointsMadePerGame, decimal pointsReceivedPerGame, int homeWins, int homeDefeats, int awayWins, int awayDefeats, decimal? homePointsMadePerGame, decimal? homePointsReceivedPerGame, decimal? awayPointsMadePerGame, decimal? awayPointsReceivedPerGame, int lastFiveGamesWon, int lastFiveGamesLost, int lastTenGamesWon, int lastTenGamesLost, int? gameSeries, int? homeGameSeries, int? awayGameSeries,
+        public StandingsEntry(int teamId, int? season, int? league, int position, string teamName, int games, int won, int lost, int points, int? pointsMade, int? pointsReceived, int pointsDifference, decimal? pointsMadePerGame, decimal? pointsReceivedPerGame, int homeWins, int homeDefeats, int awayWins, int awayDefeats, decimal? homePointsMadePerGame, decimal? homePointsReceivedPerGame, decimal? awayPointsMadePerGame, decimal? awayPointsReceivedPerGame, int lastFiveGamesWon, int lastFiveGamesLost, int lastTenGamesWon, int lastTenGamesLost, int? gameSeries, int? homeGameSeries, int? awayGameSeries,
             int? fivePointWins, int? fivePointsDefeats)
         {
             TeamId = teamId;

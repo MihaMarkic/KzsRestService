@@ -1,15 +1,13 @@
 ﻿namespace KzsRest.Models
 {
-    public class MajorLeague
+    public class MinorCupLeague
     {
         public string Name { get; }
-        public int Division { get; }
         public Gender Gender { get; }
         public string Url { get; }
-        public MajorLeague(string name, int division, Gender gender, string url)
+        public MinorCupLeague(string name, Gender gender, string url)
         {
             Name = name;
-            Division = division;
             Gender = gender;
             Url = url;
         }

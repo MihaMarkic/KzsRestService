@@ -20,8 +20,8 @@ namespace KzsRest.Controllers
             this.kzsParser = kzsParser;
             this.cacheService = cacheService;
         }
-        [HttpGet("{competition:regex(^u\\d{{1,2}}$)}/{gender}/{division}")]
-        public async Task<ActionResult<LeagueOverview>> Get(string competition, Gender gender, DivisionType division)
+        [HttpGet("minor-league/{competition:regex(^u\\d{{1,2}}$)}/{gender}/{division}")]
+        public async Task<ActionResult<LeagueOverview>> GetMinorLeague(string competition, Gender gender, DivisionType division)
         {
             if (!int.TryParse(competition.TrimStart('u', 'U'), out int uRating))
             {
@@ -38,10 +38,30 @@ namespace KzsRest.Controllers
             {
                 return NotFound();
             }
-            var result = await cacheService.GetDataAsync<string, LeagueOverview>(
+            var result = await cacheService.GetDataAsync(
                 current.Url,
                 TimeSpan.FromMinutes(15),
                 (k, ct) => kzsParser.GetLeagueOverviewAsync(k, ct), 
+                CancellationToken.None);
+            return result;
+        }
+        [HttpGet("{gender}/{division:regex(^(1|2|3|4)$)}")]
+        public async Task<ActionResult<LeagueOverview>> Get(Gender gender, int division)
+        {
+            var topLevel = await kzsParser.GetTopLevelAsync(CancellationToken.None);
+
+            var query = from m in topLevel.MajorLeagues
+                           where m.Gender == gender && m.Division == division
+                           select m;
+            var current = query.SingleOrDefault();
+            if (current == null)
+            {
+                return NotFound();
+            }
+            var result = await cacheService.GetDataAsync(
+                current.Url,
+                TimeSpan.FromMinutes(15),
+                (k, ct) => kzsParser.GetLeagueOverviewAsync(k, ct),
                 CancellationToken.None);
             return result;
         }

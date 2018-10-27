@@ -43,7 +43,7 @@ namespace KzsRest.Models.TypeConverters
                 {
                     return DivisionType.SecondB;
                 }
-                else if (string.Equals((string)value, "1k", StringComparison.OrdinalIgnoreCase))
+                else if (string.Equals((string)value, "1q", StringComparison.OrdinalIgnoreCase))
                 {
                     return DivisionType.FirstQualify;
                 }
