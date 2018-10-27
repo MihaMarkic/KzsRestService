@@ -60,7 +60,7 @@ Task("Test")
 	});
 
 Task("BuildImage")
-	//.IsDependentOn("Test")
+	.IsDependentOn("Test")
 	.Does(() =>{
 		string version = GetVersion();
 		BuildAndPush("kzs-rest", new []{ "latest", version });
@@ -161,12 +161,7 @@ Task("IncreaseVersion")
 		var doc = LoadVersions();
 		var element = doc.Element(versionsRoot);
 		Information($"Current version is {element.Value}");
-		if (!int.TryParse(element.Value, out int version))
-		{
-			Error($"Version {element.Value} is not an integer");
-			throw new Exception($"Version {element.Value} is not an integer");
-		}
-		string[] versionParts = setVersion.Split('.');
+		string[] versionParts = element.Value.Split('.');
 		versionParts[2] = (int.Parse(versionParts[2])+1).ToString();
 		element.Value = string.Join(".", versionParts);
 		SaveVersions(doc);
@@ -175,9 +170,11 @@ Task("IncreaseVersion")
 
 Task("Default")
     .Does(() => { 
-		Information(
-@"KzsParser build process targets
-");
-		});
+		Information("KzsParser build process targets");
+		foreach (string target in new string[]{"Default", "Clean", "Restore", "Build", "Test", "Publish", "BuildImage", "GetVersion", "SetVersion", "IncreaseVersion"})
+		{
+			Information($"\t{target}");
+		}
+	});
 
 RunTarget(target);
