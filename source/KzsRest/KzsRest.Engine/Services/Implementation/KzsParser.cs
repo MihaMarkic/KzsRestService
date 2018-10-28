@@ -220,8 +220,9 @@ namespace KzsRest.Engine.Services.Implementation
 
         public async Task<LeagueOverview> GetLeagueOverviewAsync(string address, bool areStandingRequired, CancellationToken ct)
         {
-            var domFixturesAndStandings = await domRetriever.GetDomForAsync(address, ct);
+            var domFixturesAndStandingsTask = domRetriever.GetDomForAsync(address, ct);
             var domResults = await domRetriever.GetDomForAsync($"{address}#mbt:33-303$t&0=1", ct);
+            var domFixturesAndStandings = await domFixturesAndStandingsTask;
             if (domFixturesAndStandings.Length == 1 && domResults.Length == 1)
             {
                 var leagueOverviewTask = ExtractStandingsAndFixturesAsync(domFixturesAndStandings[0], areStandingRequired, ct);
