@@ -220,11 +220,12 @@ namespace KzsRest.Engine.Services.Implementation
 
         public async Task<LeagueOverview> GetLeagueOverviewAsync(string address, bool areStandingRequired, CancellationToken ct)
         {
-            var dom = await domRetriever.GetDomForAsync(address, ct, "33-303-tab-2");
-            if (dom.Length > 0)
+            var domFixturesAndStandings = await domRetriever.GetDomForAsync(address, ct);
+            var domResults = await domRetriever.GetDomForAsync($"{address}#mbt:33-303$t&0=1", ct);
+            if (domFixturesAndStandings.Length == 1 && domResults.Length == 1)
             {
-                var leagueOverviewTask = ExtractStandingsAndFixturesAsync(dom[0], areStandingRequired, ct);
-                var resultsTask = ExtractLeagueGameResultsAsync(dom[1], ct);
+                var leagueOverviewTask = ExtractStandingsAndFixturesAsync(domFixturesAndStandings[0], areStandingRequired, ct);
+                var resultsTask = ExtractLeagueGameResultsAsync(domResults[0], ct);
                 var leagueOverview = await leagueOverviewTask;
                 return leagueOverview.Clone(results: await resultsTask);
             }

@@ -46,7 +46,7 @@ namespace KzsRest.Controllers
             return result;
         }
         [HttpGet("{gender}/{division:regex(^(1|2|3|4)$)}")]
-        public async Task<ActionResult<LeagueOverview>> GetMajorLegue(Gender gender, int division)
+        public async Task<ActionResult<LeagueOverview>> GetMajorLeague(Gender gender, int division)
         {
             var topLevel = await kzsParser.GetTopLevelAsync(CancellationToken.None);
 
