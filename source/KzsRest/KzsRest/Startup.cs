@@ -14,7 +14,7 @@ using System;
 
 namespace KzsRest
 {
-    public class Startup
+    public partial class Startup
     {
         public Startup(IConfiguration configuration)
         {
@@ -45,11 +45,19 @@ namespace KzsRest
             {
                 app.UseDeveloperExceptionPage();
             }
+            
+            ConfigureSpecific(app, env);
             Console.WriteLine($"Environment is {env.EnvironmentName}");
             app.UseMetricServer();
             app.UseMiddleware<RequestMetricsMiddleware>();
 
             app.UseMvc();
         }
+        /// <summary>
+        /// Do secret stuff that uses secrets that don't go in source control, i.e. register Exceptionless API key
+        /// </summary>
+        /// <param name="app"></param>
+        /// <param name="env"></param>
+        partial void ConfigureSpecific(IApplicationBuilder app, IHostingEnvironment env);
     }
 }
