@@ -26,7 +26,7 @@
                                 "Fantje U19 - 1. A SKL", DivisionType.FirstA),
                             new MinorLeagueDivision(
                                 "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U19/Fantje-U19---1.-B-SKL/cid/112", 19, Gender.Men,
-                                "Fantje U19 - 2. B SKL", DivisionType.FirstB),
+                                "Fantje U19 - 1. B SKL", DivisionType.FirstB),
                             new MinorLeagueDivision(
                                 "clanek/Tekmovanja/Mlajse-kategorije/Fantje/Fantje-U19/Fantje-U19---2.-SKL/cid/113", 19, Gender.Men,
                                 "Fantje U19 - 2. SKL", DivisionType.Second),

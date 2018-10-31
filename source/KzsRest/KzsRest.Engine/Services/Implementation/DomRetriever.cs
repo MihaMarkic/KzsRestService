@@ -64,7 +64,7 @@ namespace KzsRest.Engine.Services.Implementation
                 };
                 string result = "";
                 process.OutputDataReceived += (s, e) => result += e.Data;
-                process.ErrorDataReceived += (s, e) => Debug.WriteLine(e.Data);
+                process.ErrorDataReceived += (s, e) => logger.LogWarning($"PhantomJS: {e.Data}");
                 try
                 {
                     using (var stopWatch = new HistogramStopwatch(AppMetrics.DomRequestsDuration.Labels(httpContextAccessor.HttpContext.Request.Path)))
@@ -87,6 +87,7 @@ namespace KzsRest.Engine.Services.Implementation
                 }
                 else
                 {
+                    process.Kill();
                     logger.LogWarning("Timeout while waiting for phantom");
                     return new DomResultItem[0];
                 }
