@@ -64,7 +64,13 @@ namespace KzsRest.Engine.Services.Implementation
                 };
                 string result = "";
                 process.OutputDataReceived += (s, e) => result += e.Data;
-                process.ErrorDataReceived += (s, e) => logger.LogWarning($"PhantomJS: {e.Data}");
+                process.ErrorDataReceived += (s, e) =>
+                {
+                    if (!string.IsNullOrWhiteSpace(e.Data))
+                    {
+                        logger.LogWarning($"PhantomJS: {e.Data}");
+                    }
+                };
                 try
                 {
                     using (var stopWatch = new HistogramStopwatch(AppMetrics.DomRequestsDuration.Labels(httpContextAccessor.HttpContext.Request.Path)))
@@ -80,15 +86,33 @@ namespace KzsRest.Engine.Services.Implementation
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
                 // times out after 30s
-                if (process.WaitForExit(30 * 1000))
+                logger.LogInformation("Waiting 30s for phantomjs");
+                bool success;
+                try
+                {
+                    success = process.WaitForExit(30 * 1000);
+                }
+                catch (Exception ex)
+                {
+                    success = false;
+                    logger.LogError(ex, "Failed waiting for phantom");
+                }
+                if (success)
                 {
                     var items = ParseResult(result);
                     return items;
                 }
                 else
                 {
-                    process.Kill();
-                    logger.LogWarning("Timeout while waiting for phantom");
+                    logger.LogWarning("Timeout while waiting for phantom, will kill process");
+                    try
+                    {
+                        process.Kill();
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Failed to kill process");
+                    }
                     return new DomResultItem[0];
                 }
             });
