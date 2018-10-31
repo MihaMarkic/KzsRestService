@@ -50,5 +50,30 @@ namespace KzsRest.Models.TypeConverters
             }
             return base.ConvertFrom(context, culture, value);
         }
+
+        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+        {
+            return destinationType == typeof(string);
+        }
+
+        public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+        {
+            if (destinationType == typeof(string))
+            {
+                var division = (DivisionType)value;
+                switch (division)
+                {
+                    case DivisionType.First: return "1";
+                    case DivisionType.FirstA: return "1a";
+                    case DivisionType.FirstB: return "1b";
+                    case DivisionType.Second: return "2";
+                    case DivisionType.SecondA: return "2a";
+                    case DivisionType.SecondB: return "2b";
+                    case DivisionType.FirstQualify: return "1q";
+                    default: throw new Exception($"Unknown DivisionType {value}");
+                }
+            }
+            return base.ConvertTo(context, culture, value, destinationType);
+        }
     }
 }
