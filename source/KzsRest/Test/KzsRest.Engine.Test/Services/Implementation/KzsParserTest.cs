@@ -154,7 +154,7 @@ namespace KzsRest.Engine.Test.Services.Implementation
             {
                 var tr = fixturesTable.SelectSingleNode("tbody/tr[1]");
 
-                var actual = KzsParser.ExtractGameFixtureOrResult(tr, includeResults: false);
+                var actual = KzsParser.ExtractGameFixtureOrResult<GameFixture>(tr, includeResults: false);
 
                 Assert.That(actual.PlayDay, Is.EqualTo(5));
                 Assert.That(actual.GameId, Is.EqualTo(4240363));
@@ -178,10 +178,11 @@ namespace KzsRest.Engine.Test.Services.Implementation
             {
                 var tr = resultsTable.SelectSingleNode("tbody/tr[1]");
 
-                var actual = KzsParser.ExtractGameFixtureOrResult(tr, includeResults: true);
+                var actual = KzsParser.ExtractGameFixtureOrResult<GameResult>(tr, includeResults: true);
 
                 Assert.That(actual.PlayDay, Is.EqualTo(5));
                 Assert.That(actual.GameId, Is.EqualTo(4240341));
+                Assert.That(actual.SeasonId, Is.EqualTo(102583));
                 Assert.That(actual.Date, Is.EqualTo(DateTimeOffset.Parse("20.10.2018 12:45", KzsParser.SloveneCulture)));
                 Assert.That(actual.HomeTeam.TeamId, Is.EqualTo(195923));
                 Assert.That(actual.HomeTeam.Name, Is.EqualTo("Petrol Olimpija A"));

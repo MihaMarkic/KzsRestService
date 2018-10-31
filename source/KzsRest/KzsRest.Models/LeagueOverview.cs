@@ -6,16 +6,16 @@ namespace KzsRest.Models
     {
         public Standings[] Standings { get; }
         public GameFixture[] Fixtures { get; }
-        public GameFixture[] Results { get; }
+        public GameResult[] Results { get; }
 
-        public LeagueOverview(Standings[] standings, GameFixture[] fixtures, GameFixture[] results)
+        public LeagueOverview(Standings[] standings, GameFixture[] fixtures, GameResult[] results)
         {
             Standings = standings;
             Fixtures = fixtures;
             Results = results;
         }
 
-        public LeagueOverview Clone(Param<Standings[]>? standings = null, Param<GameFixture[]>? fixtures = null, Param<GameFixture[]>? results = null)
+        public LeagueOverview Clone(Param<Standings[]>? standings = null, Param<GameFixture[]>? fixtures = null, Param<GameResult[]>? results = null)
         {
             return new LeagueOverview(standings.HasValue ? standings.Value.Value : Standings,
 				fixtures.HasValue ? fixtures.Value.Value : Fixtures,

@@ -17,6 +17,8 @@ var appProject = appDirectory + File("KzsRest.csproj");
 var testDirectory = rootDirectory + Directory("Test");
 var engineTestDirectory = testDirectory + Directory("KzsRest.Engine.Test");
 var engineTestProject = engineTestDirectory + File("KzsRest.Engine.Test.csproj");
+var modelsTestDirectory = testDirectory + Directory("KzsRest.Models.Test");
+var modelsTestProject = modelsTestDirectory + File("KzsRest.Models.Test.csproj");
 var versionFile = Directory(".") + File("version.xml");
 const string versionsRoot = "version";
 
@@ -57,6 +59,7 @@ Task("Test")
 	.IsDependentOn("Build")
 	.Does(() => {
 		Test(engineTestProject);
+		Test(modelsTestProject);
 	});
 
 Task("BuildImage")

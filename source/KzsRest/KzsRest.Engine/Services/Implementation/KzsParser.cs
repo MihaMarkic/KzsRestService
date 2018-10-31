@@ -74,7 +74,7 @@ namespace KzsRest.Engine.Services.Implementation
             }
             return team;
         }
-        internal static Task<GameResult[]> GetLastTeamResultsAsync(DomResultItem domItem, CancellationToken ct)
+        internal static Task<TeamGameResult[]> GetLastTeamResultsAsync(DomResultItem domItem, CancellationToken ct)
         {
             return Task.Run(() =>
             {
@@ -91,7 +91,7 @@ namespace KzsRest.Engine.Services.Implementation
         /// </summary>
         /// <param name="root">tr node for the given game</param>
         /// <returns></returns>
-        internal static GameResult GetTeamGameResult(HtmlNode root)
+        internal static TeamGameResult GetTeamGameResult(HtmlNode root)
         {
             var dateNode = root.Element("td").Element("a");
             int gameId = int.Parse(dateNode.GetAttributeValue("game_id", null));
@@ -107,7 +107,7 @@ namespace KzsRest.Engine.Services.Implementation
             var scoreParts = scoreText.Split(':');
             int homeScore = int.Parse(scoreParts[0]);
             int opponentScore = int.Parse(scoreParts[1]);
-            return new GameResult(gameId, gameDate, !isTransfer, homeScore, opponentScore, opponentTeamId, opponentTeamNode.InnerText);
+            return new TeamGameResult(gameId, gameDate, !isTransfer, homeScore, opponentScore, opponentTeamId, opponentTeamNode.InnerText);
         }
         internal static Task<ShortGameFixture[]> GetShortGameFixturesAsync(DomResultItem domItem, CancellationToken ct)
         {
@@ -236,7 +236,7 @@ namespace KzsRest.Engine.Services.Implementation
             }
         }
 
-        internal static Task<GameFixture[]> ExtractLeagueGameResultsAsync(DomResultItem item, CancellationToken ct)
+        internal static Task<GameResult[]> ExtractLeagueGameResultsAsync(DomResultItem item, CancellationToken ct)
         {
             return Task.Run(() =>
             {
@@ -244,7 +244,7 @@ namespace KzsRest.Engine.Services.Implementation
                 html.LoadHtml(item.Content);
 
                 var resultsTable = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-schedule-table']");
-                var result = ExtractFixturesOrResults(resultsTable, includeResults: true, ct);
+                var result = ExtractFixturesOrResults<GameResult>(resultsTable, includeResults: true, ct);
                 return result;
             });
         }
@@ -258,7 +258,7 @@ namespace KzsRest.Engine.Services.Implementation
 
                 var standings = GetStandings(html, areStandingRequired, ct);
                 var fixturesTable = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-schedule-table']");
-                var fixtures = ExtractFixturesOrResults(fixturesTable, includeResults: false, ct);
+                var fixtures = ExtractFixturesOrResults<GameFixture>(fixturesTable, includeResults: false, ct);
                 return new LeagueOverview(
                         standings: standings,
                         fixtures: fixtures,
@@ -267,13 +267,15 @@ namespace KzsRest.Engine.Services.Implementation
             });
         }
 
-        internal static GameFixture[] ExtractFixturesOrResults(HtmlNode table, bool includeResults, CancellationToken ct)
+        internal static T[] ExtractFixturesOrResults<T>(HtmlNode table, bool includeResults, CancellationToken ct)
+            where T: GameData
         {
             var rows = table.SelectNodes("tbody/tr");
-            return rows.Select(r => ExtractGameFixtureOrResult(r, includeResults)).ToArray();
+            return rows.Select(r => ExtractGameFixtureOrResult<T>(r, includeResults)).ToArray();
         }
 
-        internal static GameFixture ExtractGameFixtureOrResult(HtmlNode tr, bool includeResults)
+        internal static T ExtractGameFixtureOrResult<T>(HtmlNode tr, bool includeResults)
+            where T: GameData
         {
             var cells = tr.SelectNodes("td");
             var dateA = cells[1].SelectSingleNode("a");
@@ -286,14 +288,30 @@ namespace KzsRest.Engine.Services.Implementation
             {
                 (homeScore, awayScore) = ExtractPairAsInt(cells[3].SelectSingleNode("a"), split: ':');
             }
-            return new GameFixture(
-                playDay: ExtractInt(cells[0].InnerText).Value,
-                gameId: ExtractInt(dateA.GetAttributeValue("game_id", null)).Value,
-                date: DateTimeOffset.Parse(dateA.InnerText, SloveneCulture),
-                homeTeam: ExtractTeamFixture(homeA, homeScore),
-                awayTeam: ExtractTeamFixture(awayA, awayScore),
-                arena: ExtractArena(arenaA)
-            );
+            if (typeof(T) == typeof(GameFixture))
+            {
+                return new GameFixture(
+                    playDay: ExtractInt(cells[0].InnerText).Value,
+                    gameId: ExtractInt(dateA.GetAttributeValue("game_id", null)).Value,
+                    seasonId: ExtractInt(dateA.GetAttributeValue("season_id", null)).Value,
+                    date: DateTimeOffset.Parse(dateA.InnerText, SloveneCulture),
+                    homeTeam: ExtractTeamFixture(homeA, homeScore),
+                    awayTeam: ExtractTeamFixture(awayA, awayScore),
+                    arena: ExtractArena(arenaA)
+                ) as T;
+            }
+            else
+            {
+                return new GameResult(
+                    playDay: ExtractInt(cells[0].InnerText).Value,
+                    gameId: ExtractInt(dateA.GetAttributeValue("game_id", null)).Value,
+                    seasonId: ExtractInt(dateA.GetAttributeValue("season_id", null)).Value,
+                    date: DateTimeOffset.Parse(dateA.InnerText, SloveneCulture),
+                    homeTeam: ExtractTeamFixture(homeA, homeScore),
+                    awayTeam: ExtractTeamFixture(awayA, awayScore),
+                    arena: ExtractArena(arenaA)
+                ) as T;
+            }
         }
 
         internal static Arena ExtractArena(HtmlNode a)
