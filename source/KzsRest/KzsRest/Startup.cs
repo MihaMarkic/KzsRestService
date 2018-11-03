@@ -36,6 +36,8 @@ namespace KzsRest
             services.AddSingleton<IConvert, KzsConvert>();
             services.AddSingleton<ISystem, KzsSystem>();
             services.AddSingleton<ICacheService, CacheService>();
+            services.AddSingleton<IDomSource, PhantomJSSource>();
+            //services.AddSingleton<IDomSource, FileHtmlSource>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

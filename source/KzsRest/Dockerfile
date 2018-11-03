@@ -18,7 +18,7 @@ RUN dotnet test "Test/KzsRest.Models.Test/KzsRest.Models.Test.csproj" --no-resto
 
 FROM build AS publish
 RUN dotnet publish "KzsRest/KzsRest.csproj" --no-restore --no-build -c Release -o /app
-#COPY ["KzsRest/Content","/app/Content"]
+# COPY ["Test/KzsRest.Engine.Test/Samples/Raw","/app/test_html"]
 RUN ls /app
 
 FROM base AS final

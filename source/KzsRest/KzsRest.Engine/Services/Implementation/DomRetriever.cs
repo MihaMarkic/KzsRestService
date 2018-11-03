@@ -1,13 +1,8 @@
-﻿using Flurl;
-using KzsRest.Engine.MetricsExtensions;
-using KzsRest.Engine.Services.Abstract;
-using Microsoft.AspNetCore.Http;
+﻿using KzsRest.Engine.Services.Abstract;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,102 +15,39 @@ namespace KzsRest.Engine.Services.Implementation
     /// </summary>
     public class DomRetriever : IDomRetriever
     {
-        const string Root = "http://www.kzs.si/";
-        readonly IConvert convert;
-        readonly ISystem system;
         readonly ILogger<KzsParser> logger;
-        readonly IHttpContextAccessor httpContextAccessor;
-        public DomRetriever(IConvert convert, ISystem system, ILogger<KzsParser> logger, IHttpContextAccessor httpContextAccessor)
+        readonly IDomSource domSource;
+        readonly IConvert convert;
+        public DomRetriever(IDomSource domSource, IConvert convert, ILogger<KzsParser> logger)
         {
-            this.convert = convert;
-            this.system = system;
             this.logger = logger;
-            this.httpContextAccessor = httpContextAccessor;
+            this.domSource = domSource;
+            this.convert = convert;
         }
-        public Task<DomResultItem[]> GetDomForAsync(string relativeAddress, CancellationToken ct, params string[] args)
+        public async Task<DomResultItem[]> GetDomForAsync(string relativeAddress, CancellationToken ct, params string[] args)
         {
-            return Task.Run(() =>
+            try
             {
-                AppMetrics.DomRequestsTotal.Labels(httpContextAccessor.HttpContext.Request.Path).Inc();
-                var exeRoot = Path.GetDirectoryName(typeof(DomRetriever).Assembly.Location);
-#if DEBUG
-                string exeName = "phantomjs.exe";
-#else
-                string exeName = "phantomjs";
-#endif
-                var psi = new ProcessStartInfo(Path.Combine(exeRoot, exeName))
+                string content;
+                // give content 10s to load
+                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
+                using (var combined = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, ct))
                 {
-                    UseShellExecute = false,
-                    WorkingDirectory = exeRoot,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                string address = Url.Combine(Root, relativeAddress);
-                string jsRoot = Path.Combine(system.ContentRootPath, "Content", "js");
-                psi.Arguments = $"--debug=false --cookies-file=\"{Path.Combine(exeRoot, "cookies.dat")}\"--disk-cache=true --disk-cache-path=\"{Path.Combine(exeRoot, "cache")}\" --load-images=false \"{Path.Combine(jsRoot, "load_and_click.js")}\" \"{address}\" {string.Join(" ", args)}";
-                logger.LogInformation($"Phantom is: {psi.FileName}");
-                logger.LogInformation($"Phantom arguments: {psi.Arguments}");
-                //logger.LogInformation(psi.Arguments);
-                var process = new Process()
-                {
-                    StartInfo = psi,
-                    EnableRaisingEvents = true
-                };
-                string result = "";
-                process.OutputDataReceived += (s, e) => result += e.Data;
-                process.ErrorDataReceived += (s, e) =>
-                {
-                    if (!string.IsNullOrWhiteSpace(e.Data))
-                    {
-                        logger.LogWarning($"PhantomJS: {e.Data}");
-                    }
-                };
-                try
-                {
-                    using (var stopWatch = new HistogramStopwatch(AppMetrics.DomRequestsDuration.Labels(httpContextAccessor.HttpContext.Request.Path)))
-                    {
-                        process.Start();
-                    }
+                    content = await domSource.GetHtmlContentAsync(relativeAddress, ct, args).ConfigureAwait(false);
                 }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Failed to start phantomjs");
-                    return new DomResultItem[0];
-                }
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-                // times out after 30s
-                logger.LogInformation("Waiting 30s for phantomjs");
-                bool success;
-                try
-                {
-                    success = process.WaitForExit(30 * 1000);
-                }
-                catch (Exception ex)
-                {
-                    success = false;
-                    logger.LogError(ex, "Failed waiting for phantom");
-                }
-                if (success)
-                {
-                    var items = ParseResult(result);
-                    return items;
-                }
-                else
-                {
-                    logger.LogWarning("Timeout while waiting for phantom, will kill process");
-                    try
-                    {
-                        process.Kill();
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogError(ex, "Failed to kill process");
-                    }
-                    return new DomResultItem[0];
-                }
-            });
+                var items = ParseResult(content);
+                return items;
+            }
+            catch (OperationCanceledException)
+            {
+                logger.LogWarning("DOM retrieval was cancelled");
+                return new DomResultItem[0];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "DOM retrieval failed");
+                return new DomResultItem[0];
+            }
         }
 
         internal DomResultItem[] ParseResult(string data)

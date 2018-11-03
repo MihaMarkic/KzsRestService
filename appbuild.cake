@@ -49,10 +49,6 @@ Task("Build")
 void Test(string testProjectName)
 {
 	DotNetCoreTest(testProjectName);
-	//var testAssembly = engineTestDirectory + Directory($"bin/{Configuration}") + File($"{testProjectName}.dll");
-	//NUnit3(testAssembly, new NUnit3Settings {
-	//		NoResults = true
-	//});
 }
 
 Task("Test")
