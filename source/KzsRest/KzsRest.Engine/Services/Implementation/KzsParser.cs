@@ -251,8 +251,23 @@ namespace KzsRest.Engine.Services.Implementation
                 html.LoadHtml(item.Content);
 
                 var resultsTable = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-schedule-table']");
-                var result = ExtractFixturesOrResults<GameResult>(resultsTable, includeResults: true, ct);
-                return result;
+                if (resultsTable != null)
+                {
+                    var result = ExtractFixturesOrResults<GameResult>(resultsTable, includeResults: true, ct);
+                    return result;
+                }
+                else
+                {
+                    var container = html.DocumentNode.SelectSingleNode("//div[@id='33-303-container']");
+                    if (container.Element("p")?.InnerText.StartsWith("Nobena tekma ne ustreza vašim kriterijem.") ?? false)
+                    {
+                        return new GameResult[0];
+                    }
+                    else
+                    {
+                        throw new Exception("No results table");
+                    }
+                }
             });
         }
 
@@ -268,7 +283,7 @@ namespace KzsRest.Engine.Services.Implementation
                 var fixtures = ExtractFixturesOrResults<GameFixture>(fixturesTable, includeResults: false, ct);
                 return new LeagueOverview(
                         standings: standings,
-                        fixtures: fixtures,
+                        fixtures: fixtures.Where(f => f != null).ToArray(),
                         results: null
                     );
             });
@@ -297,15 +312,23 @@ namespace KzsRest.Engine.Services.Implementation
             }
             if (typeof(T) == typeof(GameFixture))
             {
-                return new GameFixture(
-                    playDay: ExtractInt(cells[0].InnerText).Value,
-                    gameId: ExtractInt(dateA.GetAttributeValue("game_id", null)).Value,
-                    seasonId: ExtractInt(dateA.GetAttributeValue("season_id", null)).Value,
-                    date: DateTimeOffset.Parse(dateA.InnerText, SloveneCulture),
-                    homeTeam: ExtractTeamFixture(homeA, homeScore),
-                    awayTeam: ExtractTeamFixture(awayA, awayScore),
-                    arena: ExtractArena(arenaA)
-                ) as T;
+                // TODO cups might not have complete fixtures 
+                if (dateA != null)
+                {
+                    return new GameFixture(
+                        playDay: ExtractInt(cells[0].InnerText).Value,
+                        gameId: ExtractInt(dateA.GetAttributeValue("game_id", null)).Value,
+                        seasonId: ExtractInt(dateA.GetAttributeValue("season_id", null)).Value,
+                        date: DateTimeOffset.Parse(dateA.InnerText, SloveneCulture),
+                        homeTeam: ExtractTeamFixture(homeA, homeScore),
+                        awayTeam: ExtractTeamFixture(awayA, awayScore),
+                        arena: ExtractArena(arenaA)
+                    ) as T;
+                }
+                else
+                {
+                    return null;
+                }
             }
             else
             {
@@ -332,12 +355,21 @@ namespace KzsRest.Engine.Services.Implementation
 
         internal static TeamFixture ExtractTeamFixture(HtmlNode a, int? score)
         {
-            return new TeamFixture(
-                ExtractInt(a.GetAttributeValue("team_id", null)).Value,
-                a.InnerText,
-                leagueId: ExtractInt(a.GetAttributeValue("league_id", null)),
-                seasonId: ExtractInt(a.GetAttributeValue("season_id", null)).Value,
-                score);
+            // TODO temporal solution for Cup fixtures where team can be null
+            var teamId = a.GetAttributeValue("team_id", null);
+            if (teamId != null)
+            {
+                return new TeamFixture(
+                    ExtractInt(teamId).Value,
+                    a.InnerText,
+                    leagueId: ExtractInt(a.GetAttributeValue("league_id", null)),
+                    seasonId: ExtractInt(a.GetAttributeValue("season_id", null)).Value,
+                    score);
+            }
+            else
+            {
+                return null;
+            }
         }
 
         internal static Standings[] GetStandings(HtmlDocument html, bool areStandingRequired, CancellationToken ct)
