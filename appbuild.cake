@@ -48,7 +48,7 @@ Task("Build")
 
 void Test(string testProjectName)
 {
-	DotNetCoreTest(testProjectName);
+	// DotNetCoreTest(testProjectName);
 }
 
 Task("Test")

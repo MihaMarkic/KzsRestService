@@ -87,6 +87,15 @@ namespace KzsRest.Engine.Test.Services.Implementation
 
                 Assert.That(actual.Result.Value, Is.EqualTo(new DomResultItem("Second", "SecondTest")));
             }
+            [Test]
+            public void WhenEmptyContentAndNoNextBlock_ReturnsIndexNegative()
+            {
+                const string source = "#Root#";
+
+                var actual = Target.ParseItem(source, 0);
+
+                Assert.That(actual.Index, Is.LessThan(0));
+            }
         }
         [TestFixture]
         public class ParseResult: DomRetrieverTest

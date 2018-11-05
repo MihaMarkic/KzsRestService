@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using NLog.Web;
 using System;
+using Autofac.Extensions.DependencyInjection;
 
 namespace KzsRest
 {
@@ -32,11 +33,12 @@ namespace KzsRest
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>()
-                 .ConfigureLogging(logging =>
-                 {
-                     logging.ClearProviders();
-                     logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
-                 })
-            .UseNLog(); // NLog: setup NLog for Dependency injection
+                .ConfigureServices(services => services.AddAutofac())
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.SetMinimumLevel(LogLevel.Trace);
+                })
+                .UseNLog(); // NLog: setup NLog for Dependency injection
     }
 }

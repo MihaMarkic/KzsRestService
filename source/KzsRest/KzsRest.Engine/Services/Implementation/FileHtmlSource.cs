@@ -24,7 +24,8 @@ namespace KzsRest.Engine.Services.Implementation
         }
         public async Task<string> GetHtmlContentAsync(string relativeAddress, CancellationToken ct, params string[] args)
         {
-            await GetUrlContentAsync(ct);
+            //await GetUrlContentAsync(ct); 
+            await Task.Delay(200, ct);
             var exeRoot = Path.GetDirectoryName(typeof(FileHtmlSource).Assembly.Location);
             string file = Path.Combine(exeRoot, "test_html", MakeFilename(relativeAddress));
             if (File.Exists(file))
@@ -43,7 +44,7 @@ namespace KzsRest.Engine.Services.Implementation
 
         public Task<string> GetUrlContentAsync(CancellationToken ct)
         {
-            var tcs = new TaskCompletionSource<string>();
+            var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
             AppMetrics.DomRequestsTotal.Labels(httpContextAccessor.HttpContext.Request.Path).Inc();
             var exeRoot = Path.GetDirectoryName(typeof(DomRetriever).Assembly.Location);
 #if DEBUG
