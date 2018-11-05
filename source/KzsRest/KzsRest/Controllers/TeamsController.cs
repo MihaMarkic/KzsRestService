@@ -1,7 +1,9 @@
-﻿using KzsRest.Engine.Keys;
+﻿using KzsRest.Engine;
+using KzsRest.Engine.Keys;
 using KzsRest.Engine.Services.Abstract;
 using KzsRest.Models;
 using KzsRest.Services.Abstract;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading;
@@ -24,11 +26,18 @@ namespace KzsRest.Controllers
         [HttpGet("{teamId:int}/season/{seasonId:int}")]
         public async Task<ActionResult<Team>> GetTeam(int teamId, int seasonId)
         {
-            var result = await cacheService.GetDataAsync(
-                new TeamKey(teamId, seasonId), 
-                TimeSpan.FromMinutes(15),
-                (k, ct) => kzsParser.GetTeamAsync(k, ct), CancellationToken.None);
-            return result;
+            try
+            {
+                var result = await cacheService.GetDataAsync(
+                    new TeamKey(teamId, seasonId),
+                    TimeSpan.FromMinutes(15),
+                    (k, ct) => kzsParser.GetTeamAsync(k, ct), CancellationToken.None);
+                return result;
+            }
+            catch (DomParsingException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
         }
     }
 }

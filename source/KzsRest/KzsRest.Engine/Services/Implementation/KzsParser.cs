@@ -50,7 +50,7 @@ namespace KzsRest.Engine.Services.Implementation
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "Failed retrieving lastResults");
-                throw;
+                throw new DomParsingException("Failed retrieving lastResults", ex);
             }
             try
             {
@@ -60,7 +60,7 @@ namespace KzsRest.Engine.Services.Implementation
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "Failed retrieving fixtures");
-                throw;
+                throw new DomParsingException("Failed retrieving fixtures", ex);
             }
             try
             {
@@ -70,7 +70,7 @@ namespace KzsRest.Engine.Services.Implementation
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "Failed retrieving players");
-                throw;
+                throw new DomParsingException("Failed retrieving players", ex);
             }
             return team;
         }
@@ -225,10 +225,17 @@ namespace KzsRest.Engine.Services.Implementation
             var domFixturesAndStandings = await domFixturesAndStandingsTask;
             if (domFixturesAndStandings.Length == 1 && domResults.Length == 1)
             {
-                var leagueOverviewTask = ExtractStandingsAndFixturesAsync(domFixturesAndStandings[0], areStandingRequired, ct);
-                var resultsTask = ExtractLeagueGameResultsAsync(domResults[0], ct);
-                var leagueOverview = await leagueOverviewTask;
-                return leagueOverview.Clone(results: await resultsTask);
+                try
+                {
+                    var leagueOverviewTask = ExtractStandingsAndFixturesAsync(domFixturesAndStandings[0], areStandingRequired, ct);
+                    var resultsTask = ExtractLeagueGameResultsAsync(domResults[0], ct);
+                    var leagueOverview = await leagueOverviewTask;
+                    return leagueOverview.Clone(results: await resultsTask);
+                }
+                catch (Exception ex)
+                {
+                    throw new DomParsingException("Failed extracting results from DOM", ex); 
+                }
             }
             else
             {
