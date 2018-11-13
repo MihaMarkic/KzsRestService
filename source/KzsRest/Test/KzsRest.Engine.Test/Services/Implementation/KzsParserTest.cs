@@ -17,6 +17,7 @@ namespace KzsRest.Engine.Test.Services.Implementation
         internal const string SampleStandingsTable = "sample_standings_table";
         internal const string LeagueFixtures = "league_fixtures";
         internal const string LeagueResults = "league_results";
+        internal const string LeagueNoFixtures = "league_scores_selected";
         internal static string GetSampleContent(string file) => File.ReadAllText(Path.Combine("Samples", $"{file}.html"));
         [TestFixture]
         public class GetLeagueOverviewAsync : BaseTest<KzsParser>
@@ -405,6 +406,32 @@ namespace KzsRest.Engine.Test.Services.Implementation
                 var actual = await KzsParser.GetPlayersAsync(domItem, default);
 
                 Assert.That(actual.Length, Is.EqualTo(11));
+            }
+        }
+        [TestFixture]
+        public class IsFixturesTabActive: KzsParserTest
+        {
+            DomResultItem scoresDomItem => new DomResultItem("Root", GetSampleContent(LeagueNoFixtures));
+            DomResultItem fixturesDomItem => new DomResultItem("Root", GetSampleContent(LeagueFixtures));
+            [Test]
+            public void WhenFixturesPageAndOnlyResults_FixturesTabIsNotActive()
+            {
+                var html = new HtmlDocument();
+                html.LoadHtml(scoresDomItem.Content);
+
+                var actual = KzsParser.IsFixturesTabActive(html);
+
+                Assert.That(actual, Is.False);
+            }
+            [Test]
+            public void WhenFixturesPage_FixturesTabIsActive()
+            {
+                var html = new HtmlDocument();
+                html.LoadHtml(fixturesDomItem.Content);
+
+                var actual = KzsParser.IsFixturesTabActive(html);
+
+                Assert.That(actual, Is.True);
             }
         }
     }

@@ -280,13 +280,33 @@ namespace KzsRest.Engine.Services.Implementation
 
                 var standings = GetStandings(html, areStandingRequired, ct);
                 var fixturesTable = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-schedule-table']");
-                var fixtures = ExtractFixturesOrResults<GameFixture>(fixturesTable, includeResults: false, ct);
+                GameFixture[] fixtures;
+                // when there are no fixtures, pages shows only results
+                if (IsFixturesTabActive(html))
+                {
+                    fixtures = ExtractFixturesOrResults<GameFixture>(fixturesTable, includeResults: false, ct);
+                }
+                else
+                {
+                    fixtures = new GameFixture[0];
+                }
                 return new LeagueOverview(
                         standings: standings,
                         fixtures: fixtures.Where(f => f != null).ToArray(),
                         results: null
                     );
             });
+        }
+
+        internal static bool IsFixturesTabActive(HtmlDocument html)
+        {
+            var tab = html.DocumentNode.SelectSingleNode("//div[@id='33-303-tab-1']");
+            if (tab != null)
+            {
+                string divClass = tab.GetAttributeValue("class", "");
+                return string.Equals(divClass, "mbt-v2-navigation-tab-active", StringComparison.OrdinalIgnoreCase);
+            }
+            return false;
         }
 
         internal static T[] ExtractFixturesOrResults<T>(HtmlNode table, bool includeResults, CancellationToken ct)
