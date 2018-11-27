@@ -17,7 +17,7 @@
     <Description>Contains models for KZS rest service.</Description>
     <PackageProjectUrl>https://github.com/MihaMarkic/KzsRestService</PackageProjectUrl>
     <PackageTags>models</PackageTags>
-    <IncludeSymbols>false</IncludeSymbols>
+    <IncludeSymbols>true</IncludeSymbols>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
   </PropertyGroup>
 </Project>
