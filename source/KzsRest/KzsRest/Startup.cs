@@ -55,7 +55,7 @@ namespace KzsRest
             builder.RegisterType<KzsSystem>().As<ISystem>().SingleInstance();
             builder.RegisterType<KzsConvert>().As<IConvert>().SingleInstance();
             builder.RegisterType<CacheService>().As<ICacheService>().SingleInstance();
-            builder.RegisterType<PhantomJSSource>().As<IDomSource>().InstancePerDependency();
+            //builder.RegisterType<PhantomJSSource>().As<IDomSource>().InstancePerDependency();
             //builder.RegisterType<FileHtmlSource>().As<IDomSource>().InstancePerDependency();
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
