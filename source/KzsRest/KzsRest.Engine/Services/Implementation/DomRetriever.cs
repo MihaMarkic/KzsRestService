@@ -17,12 +17,12 @@ namespace KzsRest.Engine.Services.Implementation
     public class DomRetriever : DisposableObject, IDomRetriever
     {
         const int NumberOfConsumers = 3;
-        readonly ILogger<KzsParser> logger;
+        readonly ILogger<KzsStructureParser> logger;
         readonly IConvert convert;
         readonly BufferBlock<HtmlRequest> buffer;
         readonly CancellationTokenSource cts;
         readonly Task[] consumer;
-        public DomRetriever(Func<IDomSource> domSourceFactory, IConvert convert, ILogger<KzsParser> logger)
+        public DomRetriever(Func<IDomSource> domSourceFactory, IConvert convert, ILogger<KzsStructureParser> logger)
         {
             this.logger = logger;
             this.convert = convert;
@@ -136,7 +136,7 @@ namespace KzsRest.Engine.Services.Implementation
                     base64 = data.AsSpan().Slice(start: headerEnd + 1, length: contentEndHeader - headerEnd - 1);
                 }
                 int minLength = GetBufferForBase64Length(base64);
-                logger.LogInformation($"Min lenght for {index} is {minLength}");
+                logger.LogInformation($"Min length for {index} is {minLength}");
                 var buffer = ArrayPool<byte>.Shared.Rent(minLength);
                 logger.LogInformation($"Buffer acquired for {index}:{buffer.GetHashCode()}");
                 try

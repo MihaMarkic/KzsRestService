@@ -50,12 +50,15 @@ namespace KzsRest
         // "Without ConfigureContainer" mechanism shown later.
         public void ConfigureContainer(ContainerBuilder builder)
         {
-            builder.RegisterType<KzsParser>().As<IKzsParser>().SingleInstance();
+            //builder.RegisterType<KzsParser>().As<IKzsParser>().SingleInstance();
+            builder.RegisterType<KzsCommunicatorParser>().As<IKzsParser>().SingleInstance();
             builder.RegisterType<DomRetriever>().As<IDomRetriever>().SingleInstance();
             builder.RegisterType<KzsSystem>().As<ISystem>().SingleInstance();
             builder.RegisterType<KzsConvert>().As<IConvert>().SingleInstance();
             builder.RegisterType<CacheService>().As<ICacheService>().SingleInstance();
-            //builder.RegisterType<PhantomJSSource>().As<IDomSource>().InstancePerDependency();
+            builder.RegisterType<Communicator>().As<ICommunicator>().SingleInstance();
+            builder.RegisterType<HttpCompositeDomRetriever>().As<IHttpCompositeDomRetriever>();
+            //builder.RegisterType<PhantomJSSourcA>().As<IDomSource>().InstancePerDependency();
             //builder.RegisterType<FileHtmlSource>().As<IDomSource>().InstancePerDependency();
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

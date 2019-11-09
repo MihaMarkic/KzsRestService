@@ -1,9 +1,8 @@
 ﻿using HtmlAgilityPack;
-using KzsRest.Engine.Keys;
-using KzsRest.Engine.Services.Abstract;
 using KzsRest.Models;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -12,137 +11,100 @@ using System.Web;
 
 namespace KzsRest.Engine.Services.Implementation
 {
-    public class KzsParser : IKzsParser
+    public class KzsStructureParser
     {
-        const string Root = "Root";
-        readonly IDomRetriever domRetriever;
-        readonly ILogger<KzsParser> logger;
+        readonly ILogger<KzsStructureParser> logger;
         public static readonly CultureInfo SloveneCulture = new CultureInfo("sl-SI");
-        public KzsParser(IDomRetriever domRetriever, ILogger<KzsParser> logger)
+        public KzsStructureParser(ILogger<KzsStructureParser> logger)
         {
-            this.domRetriever = domRetriever;
             this.logger = logger;
         }
-        public async Task<Team> GetTeamAsync(TeamKey key, CancellationToken ct)
-        {
-            //const string fixturesAndStandingTab = "33-200-tab-2";
-            const string playersTab = "33-200-tab-3";
-            // http://www.kzs.si/incl?id=967&team_id=195883&league_id=undefined&season_id=102583
-            string address = $"incl?id=967&team_id={key.TeamId}&league_id=undefined&season_id={key.SeasonId}";
-            var dom = await domRetriever.GetDomForAsync(address, ct, playersTab);
-            var rootPage = dom.Cast<DomResultItem?>().SingleOrDefault(d => string.Equals(d.Value.Id, Root, StringComparison.Ordinal));
-            //var fixturesAndResultsPage = dom.Cast<DomResultItem?>().SingleOrDefault(d => string.Equals(d.Value.Id, fixturesAndStandingTab, StringComparison.Ordinal));
-            var playersPage = dom.Cast<DomResultItem?>().SingleOrDefault(d => string.Equals(d.Value.Id, playersTab, StringComparison.Ordinal));
-            if (!rootPage.HasValue)
-            {
-                throw new Exception("Couldn't get root tab");
-            }
-            var teamTask = GetTeamDataAsync(rootPage.Value, ct);
-            var lastResultsTask = GetLastTeamResultsAsync(rootPage.Value, ct);
-            var fixturesTask = GetShortGameFixturesAsync(rootPage.Value, ct);
-            var playersTask = GetPlayersAsync(playersPage.Value, ct);
-            var team = await teamTask;
-            try
-            {
-                var lastResults = await lastResultsTask;
-                team = team.Clone(lastResults: lastResults);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Failed retrieving lastResults");
-                throw new DomParsingException("Failed retrieving lastResults", ex);
-            }
-            try
-            {
-                var fixtures = await fixturesTask;
-                team = team.Clone(fixtures: fixtures);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Failed retrieving fixtures");
-                throw new DomParsingException("Failed retrieving fixtures", ex);
-            }
-            try
-            {
-                var players = await playersTask;
-                team = team.Clone(players: players);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Failed retrieving players");
-                throw new DomParsingException("Failed retrieving players", ex);
-            }
-            return team;
-        }
-        internal static Task<TeamGameResult[]> GetLastTeamResultsAsync(DomResultItem domItem, CancellationToken ct)
+
+        internal static Task<TeamGameResult[]> GetLastTeamResultsAsync(int teamId, HtmlNode node, CancellationToken ct)
         {
             return Task.Run(() =>
             {
-                var html = new HtmlDocument();
-                html.LoadHtml(domItem.Content);
-                var rows = html.DocumentNode.SelectNodes("//table[@id='mbt-v2-team-home-results-table']/tbody/tr");
-                var result = rows.Select(r => GetTeamGameResult(r)).ToArray();
+                var rows = node.SelectNodes("//table[@id='mbt-v2-team-schedule-and-results-tab']/tbody/tr");
+                var result = rows.Where(r => IsResult(r)).Select(r => GetTeamGameResult(teamId, r)).ToArray();
                 return result;
             });
         }
 
+        internal static Task<TeamGameFixture[]> GetTeamFixturesAsync(int teamId, HtmlNode node, CancellationToken ct)
+        {
+            return Task.Run(() =>
+            {
+                var rows = node.SelectNodes("//table[@id='mbt-v2-team-schedule-and-results-tab']/tbody/tr");
+                var result = rows.Where(r => !IsResult(r)).Select(r => GetTeamGameFixture(teamId, r)).ToArray();
+                return result;
+            });
+        }
+
+        internal static bool IsResult(HtmlNode root) => root.SelectSingleNode("td[4]")?.InnerText?.Contains(":") ?? false;
+        internal static bool IsFixture(HtmlNode root) => !IsResult(root);
+
+        internal static (int Id, DateTimeOffset Date) GetEntryGameInfo(HtmlNode root)
+        {
+            var dateNode = root.SelectSingleNode("td[2]").Element("a");
+            int gameId = int.Parse(dateNode.GetAttributeValue("game_id", null));
+            var dateTimeText = dateNode.InnerText;
+            DateTimeOffset gameDate = DateTimeOffset.Parse(dateTimeText, SloveneCulture);
+            return (gameId, gameDate);
+        }
+        internal static (int Id, string Name) GetEntryTeamInfo(int tdIndex, HtmlNode root)
+        {
+            var teamNode = root.SelectSingleNode($"td[{tdIndex}]//a");
+            int teamId = int.Parse(teamNode.GetAttributeValue("team_id", null));
+            string teamName = HtmlTrim(teamNode.InnerText);
+            return (teamId, teamName);
+        }
+        internal static string HtmlTrim(string source) => source.Replace("\r", "").Replace("\n", "").Trim();
         /// <summary>
         /// 
         /// </summary>
         /// <param name="root">tr node for the given game</param>
         /// <returns></returns>
-        internal static TeamGameResult GetTeamGameResult(HtmlNode root)
+        internal static TeamGameResult GetTeamGameResult(int teamId, HtmlNode root)
         {
-            var dateNode = root.Element("td").Element("a");
-            int gameId = int.Parse(dateNode.GetAttributeValue("game_id", null));
-            string dateText = dateNode.FirstChild.InnerText;
-            string timeText = dateNode.Element("span").InnerText;
-            DateTimeOffset gameDate = DateTimeOffset.Parse($"{dateText} {timeText}", SloveneCulture);
-            var opponentNode = root.SelectSingleNode("td[2]");
-            bool isTransfer = string.Equals(opponentNode.Element("span").InnerText, "pri");
-            var opponentTeamNode = opponentNode.Element("a");
-            var opponentTeamId = int.Parse(opponentTeamNode.GetAttributeValue("team_id", null));
-            var scoreNode = root.SelectSingleNode("td[3]/a");
-            string scoreText = scoreNode.InnerText;
+            var gameInfo = GetEntryGameInfo(root);
+            var homeTeamInfo = GetEntryTeamInfo(3, root);
+            var awayTeamInfo = GetEntryTeamInfo(5, root);
+
+            bool isTransfer = teamId != homeTeamInfo.Id;
+
+            var scoreNode = root.SelectSingleNode("td[4]");
+            string scoreText = HtmlTrim(scoreNode.InnerText.Replace(" ", ""));
             var scoreParts = scoreText.Split(':');
             int homeScore = int.Parse(scoreParts[0]);
-            int opponentScore = int.Parse(scoreParts[1]);
-            return new TeamGameResult(gameId, gameDate, !isTransfer, homeScore, opponentScore, opponentTeamId, opponentTeamNode.InnerText);
+            int awayScore = int.Parse(scoreParts[1]);
+
+            return new TeamGameResult(gameInfo.Id, gameInfo.Date, !isTransfer, 
+                homeScore: isTransfer ? awayScore: homeScore,
+                opponentScore: isTransfer ? homeScore: awayScore,
+                opponentId: isTransfer ? homeTeamInfo.Id: awayTeamInfo.Id,
+                opponentName: isTransfer ? homeTeamInfo.Name: awayTeamInfo.Name);
         }
-        internal static Task<ShortGameFixture[]> GetShortGameFixturesAsync(DomResultItem domItem, CancellationToken ct)
+
+        internal static TeamGameFixture GetTeamGameFixture(int teamId, HtmlNode root)
         {
-            return Task.Run(() =>
-            {
-                var html = new HtmlDocument();
-                html.LoadHtml(domItem.Content);
-                var rows = html.DocumentNode.SelectNodes("//table[@id='mbt-v2-team-home-schedule-table']/tbody/tr");
-                var result = rows.Select(r => GetShortGameFixture(r)).ToArray();
-                return result;
-            });
+            var gameInfo = GetEntryGameInfo(root);
+            var homeTeamInfo = GetEntryTeamInfo(3, root);
+            var awayTeamInfo = GetEntryTeamInfo(5, root);
+
+            bool isTransfer = teamId != homeTeamInfo.Id;
+
+            return new TeamGameFixture(gameInfo.Id, gameInfo.Date, !isTransfer,
+                opponentId: isTransfer ? homeTeamInfo.Id : awayTeamInfo.Id,
+                opponentName: isTransfer ? homeTeamInfo.Name : awayTeamInfo.Name);
         }
-        internal static ShortGameFixture GetShortGameFixture(HtmlNode root)
-        {
-            var dateNode = root.Element("td").Element("a");
-            int gameId = int.Parse(dateNode.GetAttributeValue("game_id", null));
-            string dateText = dateNode.FirstChild.InnerText;
-            string timeText = dateNode.Element("span").InnerText;
-            DateTimeOffset gameDate = DateTimeOffset.Parse($"{dateText} {timeText}", SloveneCulture);
-            var opponentNode = root.SelectSingleNode("td[2]");
-            bool isTransfer = string.Equals(opponentNode.Element("span").InnerText, "pri");
-            var opponentTeamNode = opponentNode.Element("a");
-            var opponentTeamId = int.Parse(opponentTeamNode.GetAttributeValue("team_id", null));
-            return new ShortGameFixture(gameId, gameDate, !isTransfer, opponentTeamId, 
-                                           opponentTeamNode.InnerText);
-        }
-        internal static Task<Team> GetTeamDataAsync(DomResultItem domItem, CancellationToken ct)
+
+        internal static Task<Team> GetTeamDataAsync(HtmlNode node, CancellationToken ct)
         {
             return Task.Run(() =>
             {
                 const string infoValueSelector = "span[@class='mbt-v2-team-full-widget-main-info-value']";
-                var html = new HtmlDocument();
-                html.LoadHtml(domItem.Content);
-                var root = html.DocumentNode.SelectSingleNode("//div[@id='33-200-qualizer-1']");
-                var frame = html.DocumentNode.SelectSingleNode("(//div[@class='mbt-v2-col mbt-v2-col-6'])[2]");
+                var root = node.SelectSingleNode("//div[@id='33-200-qualizer-1']");
+                var frame = node.SelectSingleNode("(//div[@class='mbt-v2-col mbt-v2-col-6'])[2]");
 
                 string name = null;
                 string shortName = null;
@@ -191,13 +153,11 @@ namespace KzsRest.Engine.Services.Implementation
             });
         }
 
-        internal static Task<Player[]> GetPlayersAsync(DomResultItem domItem, CancellationToken ct)
+        internal static Task<Player[]> GetPlayersAsync(HtmlNode node, CancellationToken ct)
         {
             return Task.Run(() =>
             {
-                var html = new HtmlDocument();
-                html.LoadHtml(domItem.Content);
-                var rows = html.DocumentNode.SelectNodes("//table[@id='mbt-v2-team-roster-table']/tbody/tr");
+                var rows = node.SelectNodes("//table[@id='mbt-v2-team-roster-table']/tbody/tr");
                 var result = rows.Select(r => GetPlayer(r)).ToArray();
                 return result;
             });
@@ -216,31 +176,6 @@ namespace KzsRest.Engine.Services.Implementation
             string position = cellNodes[4].InnerText.Trim('\r','\n',' ', '\t');
             int? height = ParseNullableInt(cellNodes[5].InnerText.Trim('\r', '\n', ' ', 'c', 'm', '\t'));
             return new Player(playerId, number, fullName, nationalityCode, nationality, birthYear, position != "-" ? position: null, height);
-        }
-
-        public async Task<LeagueOverview> GetLeagueOverviewAsync(string address, bool areStandingRequired, CancellationToken ct)
-        {
-            var domFixturesAndStandingsTask = domRetriever.GetDomForAsync(address, ct);
-            var domResults = await domRetriever.GetDomForAsync($"{address}#mbt:33-303$t&0=1", ct);
-            var domFixturesAndStandings = await domFixturesAndStandingsTask;
-            if (domFixturesAndStandings.Length == 1 && domResults.Length == 1)
-            {
-                try
-                {
-                    var leagueOverviewTask = ExtractStandingsAndFixturesAsync(domFixturesAndStandings[0], areStandingRequired, ct);
-                    var resultsTask = ExtractLeagueGameResultsAsync(domResults[0], ct);
-                    var leagueOverview = await leagueOverviewTask;
-                    return leagueOverview.Clone(results: await resultsTask);
-                }
-                catch (Exception ex)
-                {
-                    throw new DomParsingException("Failed extracting results from DOM", ex); 
-                }
-            }
-            else
-            {
-                throw new Exception("No DOM retrieved");
-            }
         }
 
         internal static Task<GameResult[]> ExtractLeagueGameResultsAsync(DomResultItem item, CancellationToken ct)
@@ -569,10 +504,6 @@ namespace KzsRest.Engine.Services.Implementation
                 }
             }
             return next;
-        }
-        public ValueTask<KzsLeagues> GetTopLevelAsync(CancellationToken ct)
-        {
-            return new ValueTask<KzsLeagues>(KzsLeagues.Default);
         }
 
         internal static int? ParseNullableInt(string text)
