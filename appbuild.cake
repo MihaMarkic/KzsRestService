@@ -1,4 +1,4 @@
-#addin "Cake.Docker"
+#addin nuget:?package=Cake.Docker&version=0.10.1
 using System.Xml.Linq;
 
 var target = Argument("target", "Default");
@@ -26,6 +26,7 @@ MSBuildSettings CreateMSBuildSettings() => new MSBuildSettings {
 			Verbosity = Verbosity.Minimal,
 			Configuration = Configuration,
 			PlatformTarget = PlatformTarget.MSIL,
+			ToolVersion = MSBuildToolVersion.VS2019,
 			ArgumentCustomization = args=>args.Append("/m")
 		};
 
@@ -73,7 +74,7 @@ void BuildAndPush(string tag, string[] tagSuffixes)
 		tags[i] = $"{dokreg}/{tag}:{tagSuffixes[i]}";
 	}
     var settings = new DockerImageBuildSettings { Tag = tags, Pull=pull, NoCache=true };
-    DockerBuild(settings, rootDirectory + File("/"));
+    DockerBuild(settings, rootDirectory);
 	if (push)
 	{
 		Information($"Pushing {(string.Join(",", tags))}");
@@ -170,7 +171,7 @@ Task("IncreaseVersion")
 Task("Default")
     .Does(() => { 
 		Information("KzsParser build process targets");
-		foreach (string target in new string[]{"Default", "Clean", "Restore", "Build", "Test", "Publish", "BuildImage", "GetVersion", "SetVersion", "IncreaseVersion"})
+		foreach (string target in new string[]{"Default", "Clean", "Restore", "Build", "Test", "BuildImage [-Push] [-Pull]", "GetVersion", "SetVersion", "IncreaseVersion"})
 		{
 			Information($"\t{target}");
 		}
