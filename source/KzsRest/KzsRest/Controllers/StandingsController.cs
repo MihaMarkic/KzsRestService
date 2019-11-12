@@ -1,7 +1,6 @@
 ﻿using KzsRest.Engine;
 using KzsRest.Engine.Services.Abstract;
 using KzsRest.Models;
-using KzsRest.Services.Abstract;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -34,18 +33,17 @@ namespace KzsRest.Controllers
                 var topLevel = await kzsParser.GetTopLevelAsync(CancellationToken.None);
                 var query = from ml in topLevel.MinorLeagues
                             where ml.ULevel == uRating && ml.Gender == gender
-                            from d in ml.Divisions
-                            where d.DivisionType == division
-                            select d;
+                            where ml.DivisionType == division
+                            select ml;
                 var current = query.SingleOrDefault();
                 if (current == null)
                 {
                     return NotFound();
                 }
                 var result = await cacheService.GetDataAsync(
-                    current.Url,
+                    current,
                     TimeSpan.FromMinutes(15),
-                    (k, ct) => kzsParser.GetLeagueOverviewAsync(k, areStandingRequired: true, ct),
+                    (k, ct) => kzsParser.GetLeagueOverviewAsync(current.Id, ct),
                     CancellationToken.None);
                 return result;
             }
@@ -70,9 +68,9 @@ namespace KzsRest.Controllers
                     return NotFound();
                 }
                 var result = await cacheService.GetDataAsync(
-                    current.Url,
+                    current,
                     TimeSpan.FromMinutes(15),
-                    (k, ct) => kzsParser.GetLeagueOverviewAsync(k, areStandingRequired: true, ct),
+                    (k, ct) => kzsParser.GetLeagueOverviewAsync(current.Id, ct),
                     CancellationToken.None);
                 return result;
             }
@@ -96,9 +94,9 @@ namespace KzsRest.Controllers
                     return NotFound();
                 }
                 var result = await cacheService.GetDataAsync(
-                    current.Url,
+                    current,
                     TimeSpan.FromMinutes(15),
-                    (k, ct) => kzsParser.GetLeagueOverviewAsync(k, areStandingRequired: false, ct),
+                    (k, ct) => kzsParser.GetLeagueOverviewAsync(current.Id, ct),
                     CancellationToken.None);
                 return result;
             }
@@ -122,9 +120,9 @@ namespace KzsRest.Controllers
                     return NotFound();
                 }
                 var result = await cacheService.GetDataAsync(
-                    current.Url,
+                    current,
                     TimeSpan.FromMinutes(15),
-                    (k, ct) => kzsParser.GetLeagueOverviewAsync(k, areStandingRequired: false, ct),
+                    (k, ct) => kzsParser.GetLeagueOverviewAsync(current.Id, ct),
                     CancellationToken.None);
                 return result;
             }

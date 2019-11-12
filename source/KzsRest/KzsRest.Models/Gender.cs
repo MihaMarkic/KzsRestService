@@ -1,8 +1,11 @@
-﻿namespace KzsRest.Models
+﻿using System;
+
+namespace KzsRest.Models
 {
+    [Flags]
     public enum Gender
     {
-        Men,
-        Women
+        Men     = 1,
+        Women   = 2
     }
 }

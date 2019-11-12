@@ -12,7 +12,7 @@ using System.Web;
 
 namespace KzsRest.Engine.Services.Implementation
 {
-    public class KzsWebParser : IKzsParser
+    public class KzsWebParser //: IKzsParser
     {
         const string Root = "Root";
         readonly IDomRetriever domRetriever;
@@ -570,9 +570,9 @@ namespace KzsRest.Engine.Services.Implementation
             }
             return next;
         }
-        public ValueTask<KzsLeagues> GetTopLevelAsync(CancellationToken ct)
+        public ValueTask<KzsOriginalLeagues> GetTopLevelAsync(CancellationToken ct)
         {
-            return new ValueTask<KzsLeagues>(KzsLeagues.Default);
+            return new ValueTask<KzsOriginalLeagues>(KzsOriginalLeagues.Default);
         }
 
         internal static int? ParseNullableInt(string text)

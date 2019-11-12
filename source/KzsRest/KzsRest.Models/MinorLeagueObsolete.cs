@@ -1,11 +1,11 @@
 ﻿namespace KzsRest.Models
 {
-    public class MinorLeague
+    public class MinorLeagueObsolete
     {
         public int ULevel { get; }
         public Gender Gender { get; }
-        public MinorLeagueDivision[] Divisions { get; }
-        public MinorLeague(int uLevel, Gender gender, MinorLeagueDivision[] divisions)
+        public MinorLeagueDivisionObsolete[] Divisions { get; }
+        public MinorLeagueObsolete(int uLevel, Gender gender, MinorLeagueDivisionObsolete[] divisions)
         {
             ULevel = uLevel;
             Gender = gender;
@@ -13,14 +13,14 @@
         }
     }
 
-    public  class MinorLeagueDivision
+    public  class MinorLeagueDivisionObsolete
     {
         public string Url { get; }
         public int ULevel { get; }
         public Gender Gender { get; }
         public string Name { get; }
         public DivisionType DivisionType { get; }
-        public MinorLeagueDivision(string url, int uLevel, Gender gender, string name, DivisionType divisionType)
+        public MinorLeagueDivisionObsolete(string url, int uLevel, Gender gender, string name, DivisionType divisionType)
         {
             Url = url;
             ULevel = uLevel;

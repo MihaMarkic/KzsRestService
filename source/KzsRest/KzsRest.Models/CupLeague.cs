@@ -1,11 +1,11 @@
 ﻿namespace KzsRest.Models
 {
-    public class MajorCupLeague
+    public class MajorCupLeagueObsolete
     {
         public string Name { get; }
         public Gender Gender { get; }
         public string Url { get; }
-        public MajorCupLeague(string name, Gender gender, string url)
+        public MajorCupLeagueObsolete(string name, Gender gender, string url)
         {
             Name = name;
             Gender = gender;

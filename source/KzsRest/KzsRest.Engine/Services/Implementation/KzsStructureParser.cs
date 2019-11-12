@@ -5,6 +5,7 @@ using System;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
@@ -15,6 +16,8 @@ namespace KzsRest.Engine.Services.Implementation
     {
         readonly ILogger<KzsStructureParser> logger;
         public static readonly CultureInfo SloveneCulture = new CultureInfo("sl-SI");
+        static readonly Regex seasonIdRegex = new Regex("season_id\\s*:\\s*\\\\'(?<id>\\d+)\\\\'",
+            RegexOptions.Singleline | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         public KzsStructureParser(ILogger<KzsStructureParser> logger)
         {
             this.logger = logger;
@@ -58,7 +61,11 @@ namespace KzsRest.Engine.Services.Implementation
             string teamName = HtmlTrim(teamNode.InnerText);
             return (teamId, teamName);
         }
-        internal static string HtmlTrim(string source) => source.Replace("\r", "").Replace("\n", "").Trim();
+        internal static string HtmlTrim(string source)
+        {
+            var parts = Regex.Split(source, "\r\n");
+            return string.Join(" ", parts.Select(p => p.Trim())).Trim();
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -206,47 +213,37 @@ namespace KzsRest.Engine.Services.Implementation
             });
         }
 
-        internal static Task<LeagueOverview> ExtractStandingsAndFixturesAsync(DomResultItem item, bool areStandingRequired, CancellationToken ct)
-        {
-            return Task.Run(() =>
-            {
-                var html = new HtmlDocument();
-                html.LoadHtml(item.Content);
+        //internal static Task<LeagueOverview> ExtractStandingsAndFixturesAsync(DomResultItem item, bool areStandingRequired, CancellationToken ct)
+        //{
+        //    return Task.Run(() =>
+        //    {
+        //        var html = new HtmlDocument();
+        //        html.LoadHtml(item.Content);
 
-                var standings = GetStandings(html, areStandingRequired, ct);
-                var fixturesTable = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-schedule-table']");
-                GameFixture[] fixtures;
-                // when there are no fixtures, pages shows only results
-                if (IsFixturesTabActive(html))
-                {
-                    fixtures = ExtractFixturesOrResults<GameFixture>(fixturesTable, includeResults: false, ct);
-                }
-                else
-                {
-                    fixtures = new GameFixture[0];
-                }
-                return new LeagueOverview(
-                        standings: standings,
-                        fixtures: fixtures.Where(f => f != null).ToArray(),
-                        results: null
-                    );
-            });
-        }
+        //        var standings = GetStandings(html, areStandingRequired, ct);
+        //        var fixturesTable = html.DocumentNode.SelectSingleNode("//table[@id='mbt-v2-schedule-table']");
+        //        GameFixture[] fixtures;
+        //        // when there are no fixtures, pages shows only results
+        //        if (IsFixturesTabActive(html))
+        //        {
+        //            fixtures = ExtractFixturesOrResults<GameFixture>(fixturesTable, includeResults: false, ct);
+        //        }
+        //        else
+        //        {
+        //            fixtures = new GameFixture[0];
+        //        }
+        //        return new LeagueOverview(
+        //                standings: standings,
+        //                fixtures: fixtures.Where(f => f != null).ToArray(),
+        //                results: null
+        //            );
+        //    });
+        //}
 
-        internal static bool IsFixturesTabActive(HtmlDocument html)
-        {
-            var tab = html.DocumentNode.SelectSingleNode("//div[@id='33-303-tab-1']");
-            if (tab != null)
-            {
-                string divClass = tab.GetAttributeValue("class", "");
-                return string.Equals(divClass, "mbt-v2-navigation-tab-active", StringComparison.OrdinalIgnoreCase);
-            }
-            return false;
-        }
-
-        internal static T[] ExtractFixturesOrResults<T>(HtmlNode table, bool includeResults, CancellationToken ct)
+        internal static T[] ExtractFixturesOrResults<T>(HtmlNode root, bool includeResults, CancellationToken ct)
             where T: GameData
         {
+            var table = root.SelectSingleNode("table");
             var rows = table.SelectNodes("tbody/tr");
             return rows.Select(r => ExtractGameFixtureOrResult<T>(r, includeResults)).ToArray();
         }
@@ -316,7 +313,7 @@ namespace KzsRest.Engine.Services.Implementation
             {
                 return new TeamFixture(
                     ExtractInt(teamId).Value,
-                    a.InnerText,
+                    HtmlTrim(a.InnerText),
                     leagueId: ExtractInt(a.GetAttributeValue("league_id", null)),
                     seasonId: ExtractInt(a.GetAttributeValue("season_id", null)).Value,
                     score);
@@ -327,42 +324,33 @@ namespace KzsRest.Engine.Services.Implementation
             }
         }
 
-        internal static Standings[] GetStandings(HtmlDocument html, bool areStandingRequired, CancellationToken ct)
+        internal static Task<Standings[]> GetStandingsAsync(HtmlNode root, CancellationToken ct)
         {
-            var standingsContainer = html.DocumentNode.SelectSingleNode("//div[@id='33-301-standings-container']");
-            if (standingsContainer == null)
+            return Task.Run(() =>
             {
-                throw new Exception("Couldn't find standings container");
-            }
-            var titles = standingsContainer.SelectNodes("//div[@class='mbt-v2-table-header-before-table']");
-            if (titles == null)
-            {
-                if (areStandingRequired)
+                var titles = root.SelectNodes("//div[@class='mbt-v2-table-header-before-table']");
+                if (titles == null)
                 {
-                    throw new Exception("Couldn't find titles");
+                    return new Standings[0];
+                }
+                if (titles?.Count > 0)
+                {
+                    var standings = new Standings[titles.Count];
+                    for (int i = 0; i < titles.Count; i++)
+                    {
+                        var standing = ExtractStanding(titles[i]);
+                        if (standing != null)
+                        {
+                            standings[i] = standing;
+                        }
+                    }
+                    return standings;
                 }
                 else
                 {
                     return new Standings[0];
                 }
-            }
-            if (titles?.Count > 0)
-            {
-                var standings = new Standings[titles.Count];
-                for (int i = 0; i < titles.Count; i++)
-                {
-                    var standing = ExtractStanding(titles[i]);
-                    if (standing != null)
-                    {
-                        standings[i] = standing;
-                    }
-                }
-                return standings;
-            }
-            else
-            {
-                return new Standings[0];
-            }
+            });
         }
 
         internal static Standings ExtractStanding(HtmlNode node)
@@ -426,6 +414,19 @@ namespace KzsRest.Engine.Services.Implementation
                 fivePointWins: fivePointsGames.Left,
                 fivePointsDefeats: fivePointsGames.Right
             );
+        }
+        internal static int? ExtractSeasonId(string html)
+        {
+            var match = seasonIdRegex.Match(html);
+            if (match.Success)
+            {
+                var group = match.Groups["id"];
+                if (int.TryParse(group.Value, out int seasonId))
+                {
+                    return seasonId;
+                }
+            }
+            return null;
         }
         internal static int? ExtractInt(HtmlNode node)
         {

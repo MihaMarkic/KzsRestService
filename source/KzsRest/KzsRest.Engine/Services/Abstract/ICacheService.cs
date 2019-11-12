@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace KzsRest.Services.Abstract
+namespace KzsRest.Engine.Services.Abstract
 {
     public interface ICacheService
     {

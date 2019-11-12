@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Flurl" Version="2.8.2" />
     <PackageReference Include="Righthand.Immutable" Version="1.0.2" />
   </ItemGroup>
   <PropertyGroup>

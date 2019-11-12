@@ -3,7 +3,6 @@ using KzsRest.Engine.MetricsExtensions;
 using KzsRest.Engine.Services.Abstract;
 using KzsRest.Engine.Services.Implementation;
 using KzsRest.Filters;
-using KzsRest.Services.Abstract;
 using KzsRest.Services.Implementation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -11,7 +10,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.ObjectPool;
 using Prometheus;
 using System;
 
@@ -34,14 +35,14 @@ namespace KzsRest
                 setup.Filters.Add(new ExceptionFilter());
             }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddMemoryCache();
-            //services.AddSingleton<IKzsParser, KzsParser>();
-            //services.AddSingleton<IDomRetriever, DomRetriever>();
-            //services.AddSingleton<IConvert, KzsConvert>();
-            //services.AddSingleton<ISystem, KzsSystem>();
-            //services.AddSingleton<ICacheService, CacheService>();
-            //services.AddTransient<IDomSource, PhantomJSSource>();
-            ////services.AddSingleton<IDomSource, FileHtmlSource>();
         }
+        //services.AddSingleton<IKzsParser, KzsParser>();
+        //services.AddSingleton<IDomRetriever, DomRetriever>();
+        //services.AddSingleton<IConvert, KzsConvert>();
+        //services.AddSingleton<ISystem, KzsSystem>();
+        //services.AddSingleton<ICacheService, CacheService>();
+        //services.AddTransient<IDomSource, PhantomJSSource>();
+        ////services.AddSingleton<IDomSource, FileHtmlSource>();
         // ConfigureContainer is where you can register things directly
         // with Autofac. This runs after ConfigureServices so the things
         // here will override registrations made in ConfigureServices.
@@ -68,7 +69,7 @@ namespace KzsRest
             {
                 app.UseDeveloperExceptionPage();
             }
-            
+
             ConfigureSpecific(app, env);
             Console.WriteLine($"Environment is {env.EnvironmentName}");
             app.UseMetricServer();

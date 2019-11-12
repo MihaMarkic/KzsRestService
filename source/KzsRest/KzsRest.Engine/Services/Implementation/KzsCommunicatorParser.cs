@@ -1,31 +1,78 @@
-﻿using HtmlAgilityPack;
-using KzsRest.Engine.Keys;
+﻿using KzsRest.Engine.Keys;
 using KzsRest.Engine.Services.Abstract;
 using KzsRest.Models;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Immutable;
 using System.Globalization;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace KzsRest.Engine.Services.Implementation
 {
-    public class KzsCommunicatorParser : IKzsParser
+    public partial class KzsCommunicatorParser : IKzsParser
     {
         const string Root = "Root";
         readonly IHttpCompositeDomRetriever compositeDomRetriever;
         readonly ILogger<KzsCommunicatorParser> logger;
+        readonly ICacheService cacheService;
         public static readonly CultureInfo SloveneCulture = new CultureInfo("sl-SI");
-        public KzsCommunicatorParser(IHttpCompositeDomRetriever compositeDomRetriever, ILogger<KzsCommunicatorParser> logger)
+        public KzsCommunicatorParser(IHttpCompositeDomRetriever compositeDomRetriever, ICacheService cacheService, ILogger<KzsCommunicatorParser> logger)
         {
             this.compositeDomRetriever = compositeDomRetriever;
+            this.cacheService = cacheService;
             this.logger = logger;
         }
-        public Task<LeagueOverview> GetLeagueOverviewAsync(string address, bool areStandingRequired, CancellationToken ct)
+        public async Task<LeagueOverview> GetLeagueOverviewAsync(int leagueId, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            int? seasonId = await GetSeasonIdAsync(leagueId, ct);
+            var fixturesTask = compositeDomRetriever.GetLeagueFixturesAsync(seasonId.Value, ct);
+            var resultsTask = compositeDomRetriever.GetLeagueResultsAsync(seasonId.Value, ct);
+            var standingsHtml = await compositeDomRetriever.GetLeagueStandingsAsync(seasonId.Value, ct);
+
+            var standings = await KzsStructureParser.GetStandingsAsync(standingsHtml.DocumentNode, ct);
+            var fixturesHtml = await fixturesTask;
+            var fixtures = KzsStructureParser.ExtractFixturesOrResults<GameFixture>(fixturesHtml.DocumentNode, includeResults: false, ct);
+            var resultsHtml = await resultsTask;
+            var results = KzsStructureParser.ExtractFixturesOrResults<GameResult>(resultsHtml.DocumentNode, includeResults: true, ct);
+
+            return new LeagueOverview(standings, fixtures, results);
+
+            //if (domFixturesAndStandings.Length == 1 && domResults.Length == 1)
+            //{
+            //    try
+            //    {
+            //        var leagueOverviewTask = ExtractStandingsAndFixturesAsync(domFixturesAndStandings[0], areStandingRequired, ct);
+            //        var resultsTask = ExtractLeagueGameResultsAsync(domResults[0], ct);
+            //        var leagueOverview = await leagueOverviewTask;
+            //        return leagueOverview.Clone(results: await resultsTask);
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        throw new DomParsingException("Failed extracting results from DOM", ex);
+            //    }
+            //}
+            //else
+            //{
+            //    throw new Exception("No DOM retrieved");
+            //}
+        }
+        public async Task<int?> GetSeasonIdAsync(int leagueId, CancellationToken ct)
+        {
+            var key = new SeasonIdKey(leagueId);
+            var result = await cacheService.GetDataAsync(
+                key,
+                TimeSpan.FromDays(1),
+                async (k, ct) =>
+                {
+                    var html = await compositeDomRetriever.GetSeasonHtmlAsync(leagueId, ct);
+                    int? result = KzsStructureParser.ExtractSeasonId(html);
+                    if (!result.HasValue)
+                    {
+                        throw new Exception($"Couldn't extract season_id for league_id {leagueId}");
+                    }
+                    return result.Value;
+                }, ct);
+            return result;
         }
 
         public async Task<Team> GetTeamAsync(TeamKey key, CancellationToken ct)
@@ -90,7 +137,7 @@ namespace KzsRest.Engine.Services.Implementation
 
         public ValueTask<KzsLeagues> GetTopLevelAsync(CancellationToken ct)
         {
-            throw new NotImplementedException();
+            return new ValueTask<KzsLeagues>(KzsLeagues.Default);
         }
     }
 }

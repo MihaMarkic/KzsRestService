@@ -40,6 +40,9 @@
     <None Update="Samples\league_scores_selected.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Samples\sample_html_for_seasonid.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Samples\sample_standings_table.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
