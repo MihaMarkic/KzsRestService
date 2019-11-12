@@ -256,5 +256,6 @@ Secrets.txt
 Secrets.Settings.cs
 *.nogit.cs
 output
-tools
 phantomjs*
+/tools/*
+!/tools/packages.config

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2041
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29503.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KzsRest", "KzsRest\KzsRest.csproj", "{8D4D5B02-1445-4361-BDC5-CF4FD48B5E9B}"
 EndProject
@@ -19,6 +19,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{C12A4649-D
 		..\..\appbuild.cake = ..\..\appbuild.cake
 		..\..\build.ps1 = ..\..\build.ps1
 		Dockerfile = Dockerfile
+		..\..\tools\packages.config = ..\..\tools\packages.config
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KzsRest.Models.Test", "Test\KzsRest.Models.Test\KzsRest.Models.Test.csproj", "{83C55905-D3AA-47C0-9305-AB7A48FB0C9E}"
