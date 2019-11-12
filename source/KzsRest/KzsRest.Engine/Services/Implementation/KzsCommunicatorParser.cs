@@ -62,15 +62,15 @@ namespace KzsRest.Engine.Services.Implementation
             var result = await cacheService.GetDataAsync(
                 key,
                 TimeSpan.FromDays(1),
-                async (k, ct) =>
+                async (k, cti) =>
                 {
-                    var html = await compositeDomRetriever.GetSeasonHtmlAsync(leagueId, ct);
-                    int? result = KzsStructureParser.ExtractSeasonId(html);
-                    if (!result.HasValue)
+                    var html = await compositeDomRetriever.GetSeasonHtmlAsync(leagueId, cti);
+                    int? seasonId = KzsStructureParser.ExtractSeasonId(html);
+                    if (!seasonId.HasValue)
                     {
                         throw new Exception($"Couldn't extract season_id for league_id {leagueId}");
                     }
-                    return result.Value;
+                    return seasonId.Value;
                 }, ct);
             return result;
         }

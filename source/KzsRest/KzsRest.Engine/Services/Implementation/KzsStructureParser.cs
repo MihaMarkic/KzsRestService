@@ -119,28 +119,28 @@ namespace KzsRest.Engine.Services.Implementation
                 string coach = null;
                 Arena arena = null;
 
-                foreach (var node in frame.SelectNodes("div[@class='mbt-v2-team-full-widget-main-info']"))
+                foreach (var n in frame.SelectNodes("div[@class='mbt-v2-team-full-widget-main-info']"))
                 {
-                    var header = node.SelectSingleNode("span[@class='mbt-v2-team-full-widget-main-info-attribute']").InnerText;
+                    var header = n.SelectSingleNode("span[@class='mbt-v2-team-full-widget-main-info-attribute']").InnerText;
                     if (header.Contains("Mesto:"))
                     {
-                        city = node.SelectSingleNode(infoValueSelector).InnerText;
+                        city = n.SelectSingleNode(infoValueSelector).InnerText;
                     }
                     else if (header.Contains("Kratko ime:"))
                     {
-                        shortName = node.SelectSingleNode(infoValueSelector).InnerText;
+                        shortName = n.SelectSingleNode(infoValueSelector).InnerText;
                     }
                     else if (header.Contains("Klub:"))
                     {
-                        name = node.SelectSingleNode(infoValueSelector).InnerText;
+                        name = n.SelectSingleNode(infoValueSelector).InnerText;
                     }
                     else if (header.Contains("Trener:"))
                     {
-                        coach = node.SelectSingleNode(infoValueSelector).InnerText;
+                        coach = n.SelectSingleNode(infoValueSelector).InnerText;
                     }
                     else if (header.Contains("Dvorana:"))
                     {
-                        var valueNode = node.SelectSingleNode(infoValueSelector);
+                        var valueNode = n.SelectSingleNode(infoValueSelector);
                         var a = valueNode.SelectSingleNode("a");
                         int arenaId = int.Parse(a.GetAttributeValue("arena_id", null));
                         arena = new Arena(arenaId, a.InnerText, HttpUtility.HtmlDecode(a.GetAttributeValue("href", null)));
