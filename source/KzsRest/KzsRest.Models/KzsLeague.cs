@@ -1,5 +1,4 @@
-﻿using Flurl;
-using System;
+﻿using System;
 
 namespace KzsRest.Models
 {
@@ -14,7 +13,7 @@ namespace KzsRest.Models
             Id = id;
             Gender = gender;
             Name = name;
-            Uri = new Uri(Url.Combine("https://www.kzs.si/", uri));
+            Uri = new Uri($"https://www.kzs.si/{uri}");
         }
     }
 
