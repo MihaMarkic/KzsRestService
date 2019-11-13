@@ -9,7 +9,7 @@
     <PackageReference Include="Righthand.Immutable" Version="1.0.2" />
   </ItemGroup>
   <PropertyGroup>
-    <Version>1.0.3</Version>
+    <Version>1.1.0</Version>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageId>KzsRest.Models</PackageId>
     <Authors>Miha Markic</Authors>
