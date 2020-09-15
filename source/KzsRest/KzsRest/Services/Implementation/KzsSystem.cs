@@ -5,8 +5,8 @@ namespace KzsRest.Services.Implementation
 {
     public class KzsSystem : ISystem
     {
-        readonly IHostingEnvironment hostingEnvironment;
-        public KzsSystem(IHostingEnvironment hostingEnvironment)
+        readonly IWebHostEnvironment hostingEnvironment;
+        public KzsSystem(IWebHostEnvironment hostingEnvironment)
         {
             this.hostingEnvironment = hostingEnvironment;
         }

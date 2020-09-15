@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
 using Prometheus;
@@ -30,10 +31,10 @@ namespace KzsRest
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc(setup =>
+            services.AddControllers(options =>
             {
-                setup.Filters.Add(new ExceptionFilter());
-            }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+                options.Filters.Add(new ExceptionFilter());
+            });
             services.AddMemoryCache();
         }
         //services.AddSingleton<IKzsParser, KzsParser>();
@@ -63,7 +64,7 @@ namespace KzsRest
             //builder.RegisterType<FileHtmlSource>().As<IDomSource>().InstancePerDependency();
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -75,13 +76,17 @@ namespace KzsRest
             app.UseMetricServer();
             app.UseMiddleware<RequestMetricsMiddleware>();
 
-            app.UseMvc();
+            app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
         /// <summary>
         /// Do secret stuff that uses secrets that don't go in source control, i.e. register Exceptionless API key
         /// </summary>
         /// <param name="app"></param>
         /// <param name="env"></param>
-        partial void ConfigureSpecific(IApplicationBuilder app, IHostingEnvironment env);
+        partial void ConfigureSpecific(IApplicationBuilder app, IWebHostEnvironment env);
     }
 }
