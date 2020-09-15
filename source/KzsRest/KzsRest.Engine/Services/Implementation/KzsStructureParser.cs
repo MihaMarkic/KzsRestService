@@ -244,8 +244,15 @@ namespace KzsRest.Engine.Services.Implementation
             where T: GameData
         {
             var table = root.SelectSingleNode("table");
-            var rows = table.SelectNodes("tbody/tr");
-            return rows.Select(r => ExtractGameFixtureOrResult<T>(r, includeResults)).ToArray();
+            if (table is object)
+            {
+                var rows = table.SelectNodes("tbody/tr");
+                return rows.Select(r => ExtractGameFixtureOrResult<T>(r, includeResults)).ToArray();
+            }
+            else
+            {
+                return new T[0];
+            }
         }
 
         internal static T ExtractGameFixtureOrResult<T>(HtmlNode tr, bool includeResults)
