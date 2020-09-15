@@ -20,6 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{C12A4649-D
 		..\..\build.ps1 = ..\..\build.ps1
 		Dockerfile = Dockerfile
 		..\..\tools\packages.config = ..\..\tools\packages.config
+		..\..\version.xml = ..\..\version.xml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KzsRest.Models.Test", "Test\KzsRest.Models.Test\KzsRest.Models.Test.csproj", "{83C55905-D3AA-47C0-9305-AB7A48FB0C9E}"
